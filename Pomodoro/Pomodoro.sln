@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pomodoro.Shared", "Pomodoro.Shared\Pomodoro.Shared.csproj", "{C17D2FBC-2218-4F93-92A2-D7FDCF269C21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pomodoro.Api", "Pomodoro.Api\Pomodoro.Api.csproj", "{80AFD286-BFEC-4476-95D0-E40320FD59D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pomodoro.API", "Pomodoro.Api\Pomodoro.API.csproj", "{80AFD286-BFEC-4476-95D0-E40320FD59D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
