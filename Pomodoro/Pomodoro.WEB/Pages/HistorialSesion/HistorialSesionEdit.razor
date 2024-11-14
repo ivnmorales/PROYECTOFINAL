@@ -1,0 +1,116 @@
+﻿@page "/historial-sesion/edit/{id:int}"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Editar Historial de Sesión</h3>
+
+<EditForm Model="@HistorialSesion" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="fecha" class="form-label">Fecha</label>
+        <InputDate id="fecha" class="form-control" @bind-Value="HistorialSesion.Fecha" />
+    </div>
+
+    <div class="mb-3">
+        <label for="duracion" class="form-label">Duración (minutos)</label>
+        <InputNumber id="duracion" class="form-control" @bind-Value="HistorialSesion.Duracion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+        <select id="proyecto" class="form-control" @bind="selectedProyectoId" required>
+            <option value="">Seleccione un proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                    <option value="@proyecto.Id" selected="@proyecto.Id == HistorialSesion.ProyectoId">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="sesionPomodoro" class="form-label">Seleccionar Sesión Pomodoro</label>
+        <select id="sesionPomodoro" class="form-control" @bind="selectedSesionPomodoroId" required>
+            <option value="">Seleccione una sesión Pomodoro</option>
+            @foreach (var sesion in sesionesPomodoro)
+            {
+                    <option value="@sesion.Id" selected="@sesion.Id == HistorialSesion.SesionId">@($"{sesion.Estado} - {sesion.Duracion} min")</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+</EditForm>
+
+@code {
+    [Parameter] public int Id { get; set; } // ID del historial de sesión a editar
+    private HistorialSesion HistorialSesion { get; set; } = new HistorialSesion();
+    private List<Proyecto> proyectos; // Lista de proyectos
+    private List<SesionPomodoro> sesionesPomodoro; // Lista de sesiones Pomodoro
+    private int selectedProyectoId;
+    private int selectedSesionPomodoroId;
+
+    // Método que se ejecuta al inicializar la página
+    protected async override Task OnInitializedAsync()
+    {
+        // Obtener el historial de sesión a editar
+        var response = await repository.Get<HistorialSesion>($"/api/historialSesiones/{Id}");
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            NavigationManager.NavigateTo("/historial-sesiones");
+            return;
+        }
+        HistorialSesion = response.Response;
+
+        // Comprobar si los valores de ProyectoId y SesionId no son nulos antes de asignarlos
+        if (HistorialSesion.ProyectoId.HasValue)
+        {
+            selectedProyectoId = HistorialSesion.ProyectoId.Value;
+        }
+
+        if (HistorialSesion.SesionId.HasValue)
+        {
+            selectedSesionPomodoroId = HistorialSesion.SesionId.Value;
+        }
+
+        // Obtener la lista de proyectos y sesiones Pomodoro
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error)
+        {
+            proyectos = proyectosResponse.Response;
+        }
+
+        var sesionesResponse = await repository.Get<List<SesionPomodoro>>("/api/sesionesPomodoro");
+        if (!sesionesResponse.Error)
+        {
+            sesionesPomodoro = sesionesResponse.Response;
+        }
+    }
+
+    // Método que se ejecuta al enviar el formulario
+    private async Task HandleValidSubmit()
+    {
+        // Asigna los valores seleccionados al modelo
+        HistorialSesion.ProyectoId = selectedProyectoId;
+        HistorialSesion.SesionId = selectedSesionPomodoroId;
+
+        // Realiza el envío a la API para actualizar el historial
+        var response = await repository.Put($"/api/historialSesiones/{Id}", HistorialSesion);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "El historial de sesión ha sido editado.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/historial-sesiones");
+        }
+    }
+}

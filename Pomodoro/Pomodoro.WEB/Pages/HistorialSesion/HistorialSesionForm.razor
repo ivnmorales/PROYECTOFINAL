@@ -1,0 +1,88 @@
+﻿@using Pomodoro.Shared.Entities
+@using Microsoft.AspNetCore.Components.Forms
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager navigationManager
+
+<EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="proyecto">Proyecto</label>
+        <select class="form-control" @bind="selectedProyectoId">
+            <option value="">Seleccionar Proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                <option value="@proyecto.Id">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="sesionPomodoro">Sesión Pomodoro</label>
+        <select class="form-control" @bind="selectedSesionPomodoroId">
+            <option value="">Seleccionar Sesión Pomodoro</option>
+            @foreach (var sesion in sesionesPomodoro)
+            {
+                <option value="@sesion.Id">@($"Sesión {sesion.Id}")</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="fecha">Fecha</label>
+        <InputDate class="form-control" @bind-Value="HistorialSesion.Fecha" />
+    </div>
+
+    <div class="form-group">
+        <label for="duracion">Duración (minutos)</label>
+        <InputNumber class="form-control" @bind-Value="HistorialSesion.Duracion" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="ReturnAction">Cancelar</button>
+</EditForm>
+
+@code {
+    [Parameter] public EventCallback OnFormSubmit { get; set; }
+    [Parameter] public Action ReturnAction { get; set; }
+
+    public HistorialSesion HistorialSesion { get; set; } = new HistorialSesion();
+    private EditContext editContext;
+
+    private List<Proyecto> proyectos; // Lista de proyectos
+    private List<SesionPomodoro> sesionesPomodoro; // Lista de sesiones Pomodoro
+    private int selectedProyectoId; // Proyecto seleccionado
+    private int selectedSesionPomodoroId; // Sesión Pomodoro seleccionada
+
+    protected override async Task OnInitializedAsync()
+    {
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error)
+        {
+            proyectos = proyectosResponse.Response;
+        }
+
+        var sesionesResponse = await repository.Get<List<SesionPomodoro>>("/api/sesionesPomodoro");
+        if (!sesionesResponse.Error)
+        {
+            sesionesPomodoro = sesionesResponse.Response;
+        }
+
+        editContext = new EditContext(HistorialSesion);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Asocia el proyecto y la sesión elegidos
+        HistorialSesion.ProyectoId = selectedProyectoId;
+        HistorialSesion.SesionId = selectedSesionPomodoroId;
+
+        // Invoca el evento OnFormSubmit
+        if (OnFormSubmit.HasDelegate)
+        {
+            await OnFormSubmit.InvokeAsync(); // Envía el evento de submit
+        }
+    }
+}

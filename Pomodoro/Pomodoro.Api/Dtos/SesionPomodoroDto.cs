@@ -7,8 +7,8 @@
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
         public string Estado { get; set; }
-        public int ProyectoId { get; set; }
-        public int TareaId { get; set; }
+        public int? ProyectoId { get; set; }
+        public int? TareaId { get; set; }
     }
 
     public class CrearSesionPomodoroDto
@@ -17,8 +17,8 @@
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
         public string Estado { get; set; }
-        public int ProyectoId { get; set; }
-        public int TareaId { get; set; }
+        public int? ProyectoId { get; set; }
+        public int? TareaId { get; set; }
     }
 
     public class ActualizarSesionPomodoroDto

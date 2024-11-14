@@ -1,0 +1,44 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+
+<div class="pomodoro-home-container animate__animated animate__fadeIn">
+    <h1 class="animate__animated animate__zoomIn">¡Bienvenido a FocusFlow!</h1>
+    <h2 class="animate__animated animate__fadeInUp">Gestiona tu tiempo y alcanza tus objetivos.</h2>
+
+    <div class="main-features">
+        <div class="feature-card animate__animated animate__fadeInUp">
+            <i class="fas fa-hourglass-half fa-2x"></i>
+            <h3>Gestión de Tareas</h3>
+            <div class="feature-description">
+                <p>Organiza tus tareas de manera eficiente y mantén el control de tu productividad diaria.</p>
+            </div>
+        </div>
+        <div class="feature-card animate__animated animate__fadeInUp">
+            <i class="fas fa-clock fa-2x"></i>
+            <h3>Sesiones Pomodoro</h3>
+            <div class="feature-description">
+                <p>Utiliza el temporizador Pomodoro para mejorar tu enfoque y productividad.</p>
+            </div>
+        </div>
+        <div class="feature-card animate__animated animate__fadeInUp">
+            <i class="fas fa-award fa-2x"></i>
+            <h3>Recompensas y Logros</h3>
+            <div class="feature-description">
+                <p>Gana recompensas por completar tareas y mantén tu motivación al máximo.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn btn-primary" @onclick="GoToDashboard">Comenzar Ahora</button>
+        <a href="/register" class="btn btn-secondary">Regístrate</a>
+        <a href="/login" class="btn btn-secondary">Inicia Sesión</a>
+    </div>
+</div>
+
+@code {
+    private void GoToDashboard()
+    {
+        NavigationManager.NavigateTo("/dashboard");
+    }
+}

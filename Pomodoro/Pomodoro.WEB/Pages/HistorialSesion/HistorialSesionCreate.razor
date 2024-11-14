@@ -1,0 +1,39 @@
+﻿@page "/historialsesiones/create"
+
+@inject NavigationManager navigationManager
+@inject IRepository repository
+@inject SweetAlertService swal
+
+<h3>Crear Nuevo Historial de Sesión</h3>
+
+<HistorialSesionForm @ref="historialSesionForm" OnFormSubmit="Create" ReturnAction="Return" />
+
+@code {
+    private HistorialSesionForm historialSesionForm; // Referencia al componente del formulario
+
+    private async Task Create()
+    {
+        // Envía la solicitud POST para crear el nuevo historial de sesión
+        var responseHTTP = await repository.Post("api/historialSesiones", historialSesionForm.HistorialSesion);
+
+        // Verifica si hay un error
+        if (responseHTTP.Error)
+        {
+            // Muestra un mensaje de error
+            var mensajeError = await responseHTTP.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            // Si la creación es exitosa, muestra el mensaje de éxito y redirige
+            await swal.FireAsync("Éxito", "Historial de sesión creado exitosamente.", SweetAlertIcon.Success);
+            navigationManager.NavigateTo("/historialsesiones"); // Redirige a la lista de historiales
+        }
+    }
+
+    private void Return()
+    {
+        // Redirige a la lista de historiales sin guardar
+        navigationManager.NavigateTo("/historialsesiones");
+    }
+}
