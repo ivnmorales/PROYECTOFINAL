@@ -1,0 +1,127 @@
+﻿@page "/historial-sesiones"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Lista de Historiales de Sesiones</h3>
+
+<div class="mb-3">
+    <a class="btn btn-warning" href="/historialsesiones/create">Nueva Sesión</a>
+</div>
+
+<GenericList MyList="historialesSesiones">
+    <Body>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Duración (min)</th>
+                    <th>Proyecto</th>
+                    <th>Sesión Pomodoro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (historialesSesiones != null && historialesSesiones.Any())
+                {
+                    @foreach (var historial in historialesSesiones)
+                    {
+                                <tr>
+                                    <td>@historial.Fecha.ToShortDateString()</td>
+                                    <td>@historial.Duracion</td>
+                                    <td>@(historial.Proyecto != null ? historial.Proyecto.Nombre : "N/A")</td> <!-- Mostrar el nombre del proyecto -->
+                                    <td>@(historial.SesionPomodoro != null ? $"{historial.SesionPomodoro.Estado} - {historial.SesionPomodoro.Duracion} min" : "N/A")</td> <!-- Mostrar el estado y duración de la sesión Pomodoro -->
+                                    <td>
+                                        <a class="btn btn-secondary" @onclick="@(() => EditHistorialSesion(historial.Id))">Editar</a>
+                                        <button class="btn btn-danger" @onclick="@(() => DeleteHistorialSesion(historial.Id))">Borrar</button>
+                                    </td>
+                                </tr>
+                    }
+                }
+                else
+                {
+                        <tr>
+                            <td colspan="5" class="text-center">No hay historiales de sesiones disponibles.</td>
+                        </tr>
+                }
+            </tbody>
+        </table>
+    </Body>
+</GenericList>
+
+@code {
+    public List<HistorialSesion>? historialesSesiones { get; set; }
+
+    // Método que se ejecuta al inicializar la página
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHttp = await repository.Get<List<HistorialSesion>>("/api/historialSesiones"); // Solicita los historiales de sesiones desde la API.
+
+        if (responseHttp.Error)
+        {
+            var mensajeError = await responseHttp.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            historialesSesiones = responseHttp.Response!;
+
+            // Obtén los proyectos y sesiones Pomodoro completos si no los tienes ya cargados
+            var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+            if (!proyectosResponse.Error)
+            {
+                foreach (var historial in historialesSesiones)
+                {
+                    historial.Proyecto = proyectosResponse.Response.FirstOrDefault(p => p.Id == historial.ProyectoId);
+                }
+            }
+
+            var sesionesResponse = await repository.Get<List<SesionPomodoro>>("/api/sesionesPomodoro");
+            if (!sesionesResponse.Error)
+            {
+                foreach (var historial in historialesSesiones)
+                {
+                    historial.SesionPomodoro = sesionesResponse.Response.FirstOrDefault(s => s.Id == historial.SesionId);
+                }
+            }
+        }
+    }
+
+    // Método para navegar a la página de edición del historial de sesión
+    private async Task EditHistorialSesion(int id)
+    {
+        NavigationManager.NavigateTo($"/historial-sesion/edit/{id:int}"); // Navega a la página de edición del historial de sesión especificado.
+    }
+
+    // Método para borrar un historial de sesión.
+    private async Task DeleteHistorialSesion(int id)
+    {
+        var respuesta = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea borrar este historial de sesión?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "No, cancelar"
+            });
+
+        if (respuesta.IsConfirmed)
+        {
+            var response = await repository.Delete($"/api/historialSesiones/{id}"); // Solicita la eliminación del historial de sesión.
+
+            if (response.Error)
+            {
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                await swal.FireAsync("Éxito", "Historial de sesión borrado exitosamente.", SweetAlertIcon.Success);
+                await OnInitializedAsync(); // Refresca la lista
+            }
+        }
+    }
+}

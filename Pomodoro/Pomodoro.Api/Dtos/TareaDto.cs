@@ -8,7 +8,7 @@ namespace Pomodoro.API.Dtos
         public string Titulo { get; set; }
         public string? Descripcion { get; set; }
         public DateTime FechaLimite { get; set; }
-        public int ProyectoId { get; set; }
+        public int? ProyectoId { get; set; }
     }
 
     public class CrearTareaDto
@@ -16,7 +16,7 @@ namespace Pomodoro.API.Dtos
         public string Titulo { get; set; }
         public string? Descripcion { get; set; }
         public DateTime FechaLimite { get; set; }
-        public int ProyectoId { get; set; }
+        public int? ProyectoId { get; set; }
     }
 
     public class ActualizarTareaDto

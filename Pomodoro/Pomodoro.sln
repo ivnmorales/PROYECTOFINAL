@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pomodoro.Shared", "Pomodoro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pomodoro.API", "Pomodoro.Api\Pomodoro.API.csproj", "{80AFD286-BFEC-4476-95D0-E40320FD59D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pomodoro.WEB", "Pomodoro.WEB\Pomodoro.WEB.csproj", "{94C7CEEC-D979-491F-A84A-678CE0A15E4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{80AFD286-BFEC-4476-95D0-E40320FD59D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80AFD286-BFEC-4476-95D0-E40320FD59D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80AFD286-BFEC-4476-95D0-E40320FD59D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94C7CEEC-D979-491F-A84A-678CE0A15E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94C7CEEC-D979-491F-A84A-678CE0A15E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94C7CEEC-D979-491F-A84A-678CE0A15E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94C7CEEC-D979-491F-A84A-678CE0A15E4F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

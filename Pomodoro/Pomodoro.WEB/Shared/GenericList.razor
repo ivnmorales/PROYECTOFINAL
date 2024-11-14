@@ -1,0 +1,48 @@
+﻿<h3>GenericList</h3>
+
+@typeparam TItem
+
+@if (MyList == null)
+{
+    @if (Loading != null)
+    {
+                <div class="align-items-center">
+            @Loading
+                </div>
+    }
+    else
+    {
+                <p>Cargando...</p>
+    }
+}
+else if (MyList.Count == 0)
+{
+    @if (NoRecords != null)
+    {
+        @NoRecords
+    }
+    else
+    {
+                <p>No hay registros para mostrar...</p>
+    }
+}
+else
+{
+    @Body
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? Loading { get; set; } = null; // Asegúrate de que sea nullable
+
+    [Parameter]
+    public RenderFragment? NoRecords { get; set; } = null; // Asegúrate de que sea nullable
+
+    [Parameter]
+    [EditorRequired]
+    public RenderFragment Body { get; set; } = null!;
+
+    [Parameter]
+    [EditorRequired]
+    public List<TItem> MyList { get; set; } = null!;
+}
