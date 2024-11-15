@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pomodoro.API.DATA;
 using Pomodoro.Shared.Entities;
-using Pomodoro.API.Dtos;
+using Pomodoro.Shared.Dtos;
 
 namespace Pomodoro.API.Controllers
 {

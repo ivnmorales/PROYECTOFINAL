@@ -1,24 +1,22 @@
-﻿namespace Pomodoro.API.Dtos
+﻿namespace Pomodoro.Shared.Dtos
 {
-    public class TecnicaEstudioDto
+    public class ProyectoDto
     {
         public int Id { get; set; }
         public string Nombre { get; set; }
         public string Descripcion { get; set; }
-        public string? Beneficios { get; set; }
+        public DateTime FechaCreacion { get; set; }
     }
 
-    public class CrearTecnicaEstudioDto
+    public class CrearProyectoDto
     {
         public string Nombre { get; set; }
         public string Descripcion { get; set; }
-        public string? Beneficios { get; set; }
     }
 
-    public class ActualizarTecnicaEstudioDto
+    public class ActualizarProyectoDto
     {
         public string Nombre { get; set; }
         public string Descripcion { get; set; }
-        public string? Beneficios { get; set; }
     }
 }

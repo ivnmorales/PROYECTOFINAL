@@ -1,4 +1,4 @@
-﻿namespace Pomodoro.API.Dtos
+﻿namespace Pomodoro.Shared.Dtos
 {
     public class RecompensaDto
     {

@@ -1,8 +1,14 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    @* Only show the sidebar on specific pages *@
+    @if (IsSidebarVisible())
+    {
+            <div class="sidebar">
+                <NavMenu />
+            </div>
+    }
 
     <main>
         <div class="top-row px-4">
@@ -14,3 +20,16 @@
         </article>
     </main>
 </div>
+
+@code {
+    private bool IsSidebarVisible()
+    {
+        var currentUri = Navigation.Uri.ToLower();
+        return currentUri.Contains("dashboard") ||
+               currentUri.Contains("proyectos") ||
+               currentUri.Contains("tareas") ||
+               currentUri.Contains("sesionespomodoro") ||
+               currentUri.Contains("historial-sesiones") ||
+               currentUri.Contains("tecnicas-estudio");
+    }
+}
