@@ -1,5 +1,66 @@
-﻿<h3>ProyectoEdit</h3>
+﻿@page "/proyectos/edit/{id:int}"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Editar Proyecto</h3>
+
+<EditForm Model="@Proyecto" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre del Proyecto</label>
+        <InputText id="nombre" class="form-control" @bind-Value="Proyecto.Nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción del Proyecto</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="Proyecto.Descripcion" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <button type="button" class="btn btn-secondary" @onclick="CancelarEdicion">Cancelar</button>
+</EditForm>
 
 @code {
+    [Parameter] public int Id { get; set; } // ID del proyecto a editar
+    private Proyecto Proyecto { get; set; } = new Proyecto();
 
+    protected async override Task OnInitializedAsync()
+    {
+        // Obtener el proyecto a editar
+        var response = await repository.Get<Proyecto>($"/api/proyectos/{Id}");
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            NavigationManager.NavigateTo("/proyectos");
+            return;
+        }
+        Proyecto = response.Response;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Realizar el envío a la API para actualizar el proyecto
+        var response = await repository.Put($"/api/proyectos/{Id}", Proyecto);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "El proyecto ha sido editado.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/proyectos");
+        }
+    }
+
+    private void CancelarEdicion()
+    {
+        NavigationManager.NavigateTo("/proyectos");
+    }
 }

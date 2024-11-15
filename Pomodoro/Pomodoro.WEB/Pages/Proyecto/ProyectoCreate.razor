@@ -1,5 +1,39 @@
-﻿<h3>ProyectoCreate</h3>
+﻿@page "/proyectos/create"
+
+@inject NavigationManager navigationManager
+@inject IRepository repository
+@inject SweetAlertService swal
+
+<h3>Crear Nuevo Proyecto</h3>
+
+<ProyectoForm @ref="proyectoForm" OnFormSubmit="Create" ReturnAction="Return" />
 
 @code {
+    private ProyectoForm proyectoForm; // Referencia al componente del formulario
 
+    private async Task Create()
+    {
+        // Envía la solicitud POST para crear el nuevo proyecto
+        var responseHTTP = await repository.Post("api/proyectos", proyectoForm.Proyecto);
+
+        // Verifica si hay un error
+        if (responseHTTP.Error)
+        {
+            // Muestra un mensaje de error
+            var mensajeError = await responseHTTP.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            // Si la creación es exitosa, muestra el mensaje de éxito y redirige
+            await swal.FireAsync("Éxito", "Proyecto creado exitosamente.", SweetAlertIcon.Success);
+            navigationManager.NavigateTo("/proyectos"); // Redirige a la lista de proyectos
+        }
+    }
+
+    private void Return()
+    {
+        // Redirige a la lista de proyectos sin guardar
+        navigationManager.NavigateTo("/proyectos");
+    }
 }
