@@ -1,5 +1,106 @@
-﻿<h3>ProyectoIndex</h3>
+﻿@page "/proyectos"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Lista de Proyectos</h3>
+
+<div class="mb-3">
+    <a class="btn btn-primary" href="/proyectos/create">Nuevo Proyecto</a>
+</div>
+
+<GenericList MyList="proyectos">
+    <Body>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Fecha de Creación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (proyectos != null && proyectos.Any())
+                {
+                    @foreach (var proyecto in proyectos)
+                    {
+                        <tr>
+                            <td>@proyecto.Nombre</td>
+                            <td>@proyecto.Descripcion</td>
+                            <td>@proyecto.FechaCreacion.ToShortDateString()</td>
+                            <td>
+                                <a class="btn btn-secondary" @onclick="@(() => EditProyecto(proyecto.Id))">Editar</a>
+                                <button class="btn btn-danger" @onclick="@(() => DeleteProyecto(proyecto.Id))">Borrar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center">No hay proyectos disponibles.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </Body>
+</GenericList>
 
 @code {
+    public List<Proyecto>? proyectos { get; set; }
 
+    // Método que se ejecuta al inicializar la página
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHttp = await repository.Get<List<Proyecto>>("/api/proyectos");
+
+        if (responseHttp.Error)
+        {
+            var mensajeError = await responseHttp.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            proyectos = responseHttp.Response!;
+        }
+    }
+
+    // Método para navegar a la página de edición del proyecto
+    private void EditProyecto(int id)
+    {
+        NavigationManager.NavigateTo($"/proyectos/edit/{id}");
+    }
+
+    // Método para borrar un proyecto
+    private async Task DeleteProyecto(int id)
+    {
+        var respuesta = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea borrar este proyecto?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "No, cancelar"
+            });
+
+        if (respuesta.IsConfirmed)
+        {
+            var response = await repository.Delete($"/api/proyectos/{id}");
+
+            if (response.Error)
+            {
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                await swal.FireAsync("Éxito", "Proyecto borrado exitosamente.", SweetAlertIcon.Success);
+                await OnInitializedAsync(); // Refresca la lista
+            }
+        }
+    }
 }
