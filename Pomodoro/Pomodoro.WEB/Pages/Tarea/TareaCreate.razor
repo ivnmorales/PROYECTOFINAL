@@ -1,5 +1,76 @@
-﻿<h3>TareaCreate</h3>
+﻿@page "/tareas/create"
+@using Pomodoro.Shared.Dtos
+
+@inject NavigationManager navigationManager
+@inject SweetAlertService swal
+@inject IRepository repository
+
+<h3>Crear Nueva Tarea</h3>
+
+<EditForm Model="@tareaDto" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="titulo" class="form-label">Título</label>
+        <InputText id="titulo" class="form-control" @bind-Value="tareaDto.Titulo" />
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <InputText id="descripcion" class="form-control" @bind-Value="tareaDto.Descripcion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="fechaLimite" class="form-label">Fecha Límite</label>
+        <InputDate id="fechaLimite" class="form-control" @bind-Value="tareaDto.FechaLimite" />
+    </div>
+
+    <div class="mb-3">
+        <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+        <select id="proyecto" class="form-control" @bind="selectedProyectoId" required>
+            <option value="">Seleccione un proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                <option value="@proyecto.Id">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear Tarea</button>
+</EditForm>
 
 @code {
+    private CrearTareaDto tareaDto = new CrearTareaDto();
+    private List<Proyecto> proyectos = new List<Proyecto>();
+    private int selectedProyectoId;
 
+    protected async override Task OnInitializedAsync()
+    {
+        // Obtener lista de proyectos
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error)
+        {
+            proyectos = proyectosResponse.Response;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Asignar el ProyectoId seleccionado
+        tareaDto.ProyectoId = selectedProyectoId;
+
+        // Enviar a la API para crear la tarea
+        var response = await repository.Post("/api/tareas", tareaDto);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "La tarea ha sido creada.", SweetAlertIcon.Success);
+            navigationManager.NavigateTo("/tareas");
+        }
+    }
 }

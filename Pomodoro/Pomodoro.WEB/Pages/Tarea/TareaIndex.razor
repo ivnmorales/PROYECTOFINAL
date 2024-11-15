@@ -1,5 +1,116 @@
-﻿<h3>TareaIndex</h3>
+﻿@page "/tareas"
+@using Pomodoro.Shared.Dtos
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Lista de Tareas</h3>
+
+<div class="mb-3">
+    <a class="btn btn-warning" href="/tareas/create">Nueva Tarea</a>
+</div>
+
+<GenericList MyList="tareas">
+    <Body>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Fecha Limite</th>
+                    <th>Proyecto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (tareas != null && tareas.Any())
+                {
+                    @foreach (var tarea in tareas)
+                    {
+                        <tr>
+                            <td>@tarea.Titulo</td>
+                            <td>@tarea.Descripcion</td>
+                            <td>@tarea.FechaLimite.ToShortDateString()</td>
+                            <td>@(tarea.ProyectoId != null ? proyectos.FirstOrDefault(p => p.Id == tarea.ProyectoId)?.Nombre : "N/A")</td>
+                            <td>
+                                <a class="btn btn-secondary" @onclick="@(() => EditTarea(tarea.Id))">Editar</a>
+                                <button class="btn btn-danger" @onclick="@(() => DeleteTarea(tarea.Id))">Borrar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center">No hay tareas disponibles.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </Body>
+</GenericList>
 
 @code {
+    public List<TareaDto>? tareas { get; set; }
+    private List<Proyecto> proyectos = new();
 
+    // Método que se ejecuta al inicializar la página
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHttp = await repository.Get<List<TareaDto>>("/api/tareas");
+
+        if (responseHttp.Error)
+        {
+            var mensajeError = await responseHttp.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            tareas = responseHttp.Response!;
+
+            // Cargar los proyectos si aún no están cargados
+            var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+            if (!proyectosResponse.Error)
+            {
+                proyectos = proyectosResponse.Response;
+            }
+        }
+    }
+
+    // Método para navegar a la página de edición de una tarea
+    private void EditTarea(int id)
+    {
+        NavigationManager.NavigateTo($"/tarea/edit/{id}");
+    }
+
+    // Método para borrar una tarea
+    private async Task DeleteTarea(int id)
+    {
+        var respuesta = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea borrar esta tarea?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "No, cancelar"
+            });
+
+        if (respuesta.IsConfirmed)
+        {
+            var response = await repository.Delete($"/api/tareas/{id}");
+
+            if (response.Error)
+            {
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                await swal.FireAsync("Éxito", "Tarea borrada exitosamente.", SweetAlertIcon.Success);
+                await OnInitializedAsync(); // Refresca la lista de tareas
+            }
+        }
+    }
 }

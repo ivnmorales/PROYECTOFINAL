@@ -1,5 +1,94 @@
-﻿<h3>TareaEdit</h3>
+﻿@page "/tarea/edit/{id:int}"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Editar Tarea</h3>
+
+<EditForm Model="@tarea" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="titulo" class="form-label">Título</label>
+        <InputText id="titulo" class="form-control" @bind-Value="tarea.Titulo" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="tarea.Descripcion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="fechaLimite" class="form-label">Fecha Límite</label>
+        <InputDate id="fechaLimite" class="form-control" @bind-Value="tarea.FechaLimite" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+        <select id="proyecto" class="form-control" @bind="selectedProyectoId" required>
+            <option value="">Seleccione un proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                <option value="@proyecto.Id" selected="@proyecto.Id == tarea.ProyectoId">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+</EditForm>
 
 @code {
+    [Parameter] public int Id { get; set; } // ID de la tarea a editar
+    private Tarea tarea { get; set; } = new Tarea();
+    private List<Proyecto> proyectos = new List<Proyecto>(); // Lista de proyectos
+    private int selectedProyectoId;
 
+    protected async override Task OnInitializedAsync()
+    {
+        // Obtener la tarea a editar
+        var response = await repository.Get<Tarea>($"/api/tareas/{Id}");
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            NavigationManager.NavigateTo("/tareas");
+            return;
+        }
+        tarea = response.Response;
+
+        // Asignar ProyectoId si no es nulo
+        if (tarea.ProyectoId.HasValue)
+        {
+            selectedProyectoId = tarea.ProyectoId.Value;
+        }
+
+        // Obtener lista de proyectos
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error)
+        {
+            proyectos = proyectosResponse.Response;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Asignar valores seleccionados al modelo
+        tarea.ProyectoId = selectedProyectoId;
+
+        // Enviar a la API para actualizar la tarea
+        var response = await repository.Put($"/api/tareas/{Id}", tarea);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "La tarea ha sido editada.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/tareas");
+        }
+    }
 }

@@ -1,5 +1,87 @@
-﻿<h3>TareaForm</h3>
+﻿@using Pomodoro.Shared.Entities
+@using Pomodoro.Shared.Dtos
+@using Microsoft.AspNetCore.Components.Forms
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager navigationManager
+
+<EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="titulo">Título</label>
+        <InputText id="titulo" class="form-control" @bind-Value="Tarea.Titulo" />
+    </div>
+
+    <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="Tarea.Descripcion" />
+    </div>
+
+    <div class="form-group">
+        <label for="fechaLimite">Fecha Límite</label>
+        <InputDate id="fechaLimite" class="form-control" @bind-Value="Tarea.FechaLimite" />
+    </div>
+
+    <div class="form-group">
+        <label for="proyectos">Seleccionar Proyecto</label>
+        <select id="proyectos" class="form-control" @bind="selectedProyectoId">
+            <option value="">Seleccione un proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                <option value="@proyecto.Id">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary" disabled="@isSubmitting">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="ReturnAction">Cancelar</button>
+</EditForm>
 
 @code {
+    [Parameter] public EventCallback OnFormSubmit { get; set; }
+    [Parameter] public Action ReturnAction { get; set; }
 
+    public CrearTareaDto Tarea { get; set; } = new CrearTareaDto();
+    private EditContext editContext;
+    private bool isSubmitting = false;
+
+    private List<Proyecto> proyectos = new List<Proyecto>();
+    private int? selectedProyectoId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(Tarea);
+
+        var proyectosResponse = await repository.Get<List<Proyecto>>("api/proyectos");
+        if (!proyectosResponse.Error)
+        {
+            proyectos = proyectosResponse.Response;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (isSubmitting)
+            return;
+
+        isSubmitting = true;
+
+        Tarea.ProyectoId = selectedProyectoId;
+
+        var response = await repository.Post("/api/tareas", Tarea);
+
+        if (response.Error)
+        {
+            var errorMsg = await response.GetErrorMessage();
+            await swal.FireAsync("Error", errorMsg, SweetAlertIcon.Error);
+            isSubmitting = false; // Allow retry if there was an error
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "Tarea guardada exitosamente.", SweetAlertIcon.Success);
+            await OnFormSubmit.InvokeAsync(); // This should redirect or take any necessary action
+        }
+    }
 }
