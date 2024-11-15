@@ -1,0 +1,72 @@
+﻿@page "/dashboard"
+@inherits LayoutComponentBase
+
+<div class="dashboard-container">
+    <div class="pomodoro-timer-container">
+        <div class="timer">
+            <h2>Tiempo Restante</h2>
+            <div class="clock">
+                <span>@FormattedTime</span>
+            </div>
+            <div class="controls">
+                <button class="btn btn-primary" @onclick="StartStopTimer">@timerButtonText</button>
+                <button class="btn btn-secondary" @onclick="ResetTimer">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int timeLeft = 25 * 60; // 25 minutos en segundos
+    private bool isRunning = false;
+    private string timerButtonText = "Start";
+    private System.Timers.Timer? timer;
+
+    private string FormattedTime => $"{timeLeft / 60:D2}:{timeLeft % 60:D2}";
+
+    private void StartStopTimer()
+    {
+        if (isRunning)
+        {
+            timer?.Stop();
+            timerButtonText = "Start";
+        }
+        else
+        {
+            StartTimer();
+            timerButtonText = "Pause";
+        }
+        isRunning = !isRunning;
+    }
+
+    private void StartTimer()
+    {
+        timer = new System.Timers.Timer(1000);
+        timer.Elapsed += (sender, e) =>
+        {
+            if (timeLeft > 0)
+            {
+                timeLeft--;
+                InvokeAsync(StateHasChanged); // Actualiza la interfaz
+            }
+            else
+            {
+                timer?.Stop();
+                isRunning = false;
+                timerButtonText = "Start";
+            }
+        };
+        timer.Start();
+    }
+
+    private void ResetTimer()
+    {
+        timeLeft = 25 * 60;
+        if (isRunning)
+        {
+            timer?.Stop();
+            StartTimer(); // Reinicia el temporizador si estaba corriendo
+        }
+        timerButtonText = "Start";
+    }
+}

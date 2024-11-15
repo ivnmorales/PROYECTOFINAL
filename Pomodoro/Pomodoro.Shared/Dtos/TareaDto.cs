@@ -1,6 +1,5 @@
-﻿using Pomodoro.API.Dtos;
-
-namespace Pomodoro.API.Dtos
+﻿
+namespace Pomodoro.Shared.Dtos
 {
     public class TareaDto
     {
