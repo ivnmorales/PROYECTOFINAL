@@ -1,5 +1,147 @@
-﻿<h3>ProyectoForm</h3>
+﻿@using Pomodoro.Shared.Entities
+@using Microsoft.AspNetCore.Components.Forms
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager navigationManager
+
+<EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="nombre">Nombre del Proyecto</label>
+        <InputText id="nombre" class="form-control" @bind-Value="Proyecto.Nombre" />
+    </div>
+
+    <div class="form-group">
+        <label for="descripcion">Descripción del Proyecto</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="Proyecto.Descripcion" />
+    </div>
+
+    <div class="form-group">
+        <label for="tareas">Seleccionar Tarea</label>
+        <select id="tareas" class="form-control" @bind="selectedTareaId">
+            <option value="">Seleccione una tarea</option>
+            @foreach (var tarea in tareas)
+            {
+                <option value="@tarea.Id">@tarea.Titulo</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="sesionesPomodoro">Seleccionar Sesión Pomodoro</label>
+        <select id="sesionesPomodoro" class="form-control" @bind="selectedSesionPomodoroId">
+            <option value="">Seleccione una sesión</option>
+            @foreach (var sesion in sesionesPomodoro)
+            {
+                <option value="@sesion.Id">@($"{sesion.Estado} - {sesion.Duracion} min")</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="recompensas">Seleccionar Recompensa</label>
+        <select id="recompensas" class="form-control" @bind="selectedRecompensaId">
+            <option value="">Seleccione una recompensa</option>
+            @foreach (var recompensa in recompensas)
+            {
+                <option value="@recompensa.Id">@recompensa.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="historialSesiones">Seleccionar Historial de Sesiones</label>
+        <select id="historialSesiones" class="form-control" @bind="selectedHistorialSesionId">
+            <option value="">Seleccione un historial</option>
+            @foreach (var historial in historialSesiones)
+            {
+                <option value="@historial.Id">@($"{historial.Fecha:yyyy-MM-dd} - {historial.Duracion} min")</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="ReturnAction">Cancelar</button>
+</EditForm>
 
 @code {
+    [Parameter] public EventCallback OnFormSubmit { get; set; }
+    [Parameter] public Action ReturnAction { get; set; }
 
+    public Proyecto Proyecto { get; set; } = new Proyecto();
+    private EditContext editContext;
+    private bool isSubmitting = false;  // Variable de control
+
+    private List<Tarea> tareas = new List<Tarea>();
+    private List<SesionPomodoro> sesionesPomodoro = new List<SesionPomodoro>();
+    private List<Recompensa> recompensas = new List<Recompensa>();
+    private List<HistorialSesion> historialSesiones = new List<HistorialSesion>();
+
+    private int? selectedTareaId;
+    private int? selectedSesionPomodoroId;
+    private int? selectedRecompensaId;
+    private int? selectedHistorialSesionId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(Proyecto);
+
+        var tareasResponse = await repository.Get<List<Tarea>>("api/tareas");
+        if (!tareasResponse.Error)
+        {
+            tareas = tareasResponse.Response;
+        }
+
+        var sesionesResponse = await repository.Get<List<SesionPomodoro>>("api/sesionesPomodoro");
+        if (!sesionesResponse.Error)
+        {
+            sesionesPomodoro = sesionesResponse.Response;
+        }
+
+        var recompensasResponse = await repository.Get<List<Recompensa>>("api/recompensas");
+        if (!recompensasResponse.Error)
+        {
+            recompensas = recompensasResponse.Response;
+        }
+
+        var historialSesionesResponse = await repository.Get<List<HistorialSesion>>("api/historialSesiones");
+        if (!historialSesionesResponse.Error)
+        {
+            historialSesiones = historialSesionesResponse.Response;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Evitar reenvío de la solicitud si ya se está enviando
+        if (isSubmitting)
+            return;
+
+        isSubmitting = true;  // Evitar múltiples envíos
+
+        // Asocia las entidades seleccionadas al proyecto
+        Proyecto.Tareas = selectedTareaId.HasValue ? new List<Tarea> { tareas.FirstOrDefault(t => t.Id == selectedTareaId.Value) } : new List<Tarea>();
+        Proyecto.SesionesPomodoro = selectedSesionPomodoroId.HasValue ? new List<SesionPomodoro> { sesionesPomodoro.FirstOrDefault(s => s.Id == selectedSesionPomodoroId.Value) } : new List<SesionPomodoro>();
+        Proyecto.Recompensas = selectedRecompensaId.HasValue ? new List<Recompensa> { recompensas.FirstOrDefault(r => r.Id == selectedRecompensaId.Value) } : new List<Recompensa>();
+        Proyecto.HistorialSesiones = selectedHistorialSesionId.HasValue ? new List<HistorialSesion> { historialSesiones.FirstOrDefault(h => h.Id == selectedHistorialSesionId.Value) } : new List<HistorialSesion>();
+
+        var response = await repository.Post("/api/proyectos", Proyecto);
+
+        if (response.Error)
+        {
+            // Muestra alerta de error solo si hubo un error
+            var errorMsg = await response.GetErrorMessage();
+            await swal.FireAsync("Error", errorMsg, SweetAlertIcon.Error);
+        }
+        else
+        {
+            // Muestra alerta de éxito
+            await swal.FireAsync("Éxito", "Proyecto guardado exitosamente.", SweetAlertIcon.Success);
+            await OnFormSubmit.InvokeAsync();
+        }
+
+        isSubmitting = false;  // Restaurar estado de envío
+    }
 }
