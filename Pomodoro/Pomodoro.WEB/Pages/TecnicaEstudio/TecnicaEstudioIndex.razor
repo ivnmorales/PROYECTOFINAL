@@ -1,5 +1,106 @@
-﻿<h3>TecnicaEstudioIndex</h3>
+﻿@page "/tecnicas-estudio"
+@using Pomodoro.Shared.Dtos
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Lista de Técnicas de Estudio</h3>
+
+<div class="mb-3">
+    <a class="btn btn-warning" href="/tecnicas-estudio/create">Nueva Técnica de Estudio</a>
+</div>
+
+<GenericList MyList="tecnicasEstudio">
+    <Body>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Beneficios</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (tecnicasEstudio != null && tecnicasEstudio.Any())
+                {
+                    @foreach (var tecnica in tecnicasEstudio)
+                    {
+                        <tr>
+                            <td>@tecnica.Nombre</td>
+                            <td>@tecnica.Descripcion</td>
+                            <td>@(string.IsNullOrEmpty(tecnica.Beneficios) ? "N/A" : tecnica.Beneficios)</td>
+                            <td>
+                                <a class="btn btn-secondary" @onclick="@(() => EditTecnicaEstudio(tecnica.Id))">Editar</a>
+                                <button class="btn btn-danger" @onclick="@(() => DeleteTecnicaEstudio(tecnica.Id))">Borrar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center">No hay técnicas de estudio disponibles.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </Body>
+</GenericList>
 
 @code {
+    public List<TecnicaEstudioDto>? tecnicasEstudio { get; set; }
 
+    // Método que se ejecuta al inicializar la página
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHttp = await repository.Get<List<TecnicaEstudioDto>>("/api/tecnicas-estudio");
+
+        if (responseHttp.Error)
+        {
+            var mensajeError = await responseHttp.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            tecnicasEstudio = responseHttp.Response!;
+        }
+    }
+
+    // Método para navegar a la página de edición de una técnica de estudio
+    private void EditTecnicaEstudio(int id)
+    {
+        NavigationManager.NavigateTo($"/tecnica-estudio/edit/{id}");
+    }
+
+    // Método para borrar una técnica de estudio
+    private async Task DeleteTecnicaEstudio(int id)
+    {
+        var respuesta = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea borrar esta técnica de estudio?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "No, cancelar"
+            });
+
+        if (respuesta.IsConfirmed)
+        {
+            var response = await repository.Delete($"/api/tecnicas-estudio/{id}");
+
+            if (response.Error)
+            {
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                await swal.FireAsync("Éxito", "Técnica de estudio borrada exitosamente.", SweetAlertIcon.Success);
+                await OnInitializedAsync(); // Refresca la lista de técnicas de estudio
+            }
+        }
+    }
 }

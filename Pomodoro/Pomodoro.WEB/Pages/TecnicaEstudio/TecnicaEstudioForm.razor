@@ -1,5 +1,65 @@
-﻿<h3>TecnicaEstudioForm</h3>
+﻿@using Pomodoro.Shared.Entities
+@using Pomodoro.Shared.Dtos
+@using Microsoft.AspNetCore.Components.Forms
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager navigationManager
+
+<EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="nombre">Nombre de la Técnica</label>
+        <InputText id="nombre" class="form-control" @bind-Value="TecnicaEstudio.Nombre" />
+    </div>
+
+    <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="TecnicaEstudio.Descripcion" />
+    </div>
+
+    <div class="form-group">
+        <label for="beneficios">Beneficios</label>
+        <InputTextArea id="beneficios" class="form-control" @bind-Value="TecnicaEstudio.Beneficios" />
+    </div>
+
+    <button type="submit" class="btn btn-primary" disabled="@isSubmitting">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="ReturnAction">Cancelar</button>
+</EditForm>
 
 @code {
+    [Parameter] public EventCallback OnFormSubmit { get; set; }
+    [Parameter] public Action ReturnAction { get; set; }
 
+    public CrearTecnicaEstudioDto TecnicaEstudio { get; set; } = new CrearTecnicaEstudioDto();
+    private EditContext editContext;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(TecnicaEstudio);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (isSubmitting)
+            return;
+
+        isSubmitting = true;
+
+        var response = await repository.Post("/api/tecnicas-estudio", TecnicaEstudio);
+
+        if (response.Error)
+        {
+            var errorMsg = await response.GetErrorMessage();
+            await swal.FireAsync("Error", errorMsg, SweetAlertIcon.Error);
+            isSubmitting = false; // Permitir reintentos si hubo un error
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "Técnica de estudio guardada exitosamente.", SweetAlertIcon.Success);
+            await OnFormSubmit.InvokeAsync(); // Esto debería redirigir o tomar cualquier acción necesaria
+        }
+    }
 }

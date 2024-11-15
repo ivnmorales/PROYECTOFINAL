@@ -1,5 +1,65 @@
-﻿<h3>TecnicaEstudioEdit</h3>
+﻿@page "/tecnica-estudio/edit/{id:int}"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Editar Técnica de Estudio</h3>
+
+<EditForm Model="@tecnicaEstudio" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <InputText id="nombre" class="form-control" @bind-Value="tecnicaEstudio.Nombre" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="tecnicaEstudio.Descripcion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="beneficios" class="form-label">Beneficios</label>
+        <InputTextArea id="beneficios" class="form-control" @bind-Value="tecnicaEstudio.Beneficios" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+</EditForm>
 
 @code {
+    [Parameter] public int Id { get; set; } // ID de la técnica de estudio a editar
+    private TecnicaEstudio tecnicaEstudio { get; set; } = new TecnicaEstudio();
 
+    protected async override Task OnInitializedAsync()
+    {
+        // Obtener la técnica de estudio a editar
+        var response = await repository.Get<TecnicaEstudio>($"/api/tecnicas-estudio/{Id}");
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            NavigationManager.NavigateTo("/tecnicas-estudio");
+            return;
+        }
+        tecnicaEstudio = response.Response;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Enviar a la API para actualizar la técnica de estudio
+        var response = await repository.Put($"/api/tecnicas-estudio/{Id}", tecnicaEstudio);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "La técnica de estudio ha sido editada.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/tecnicas-estudio");
+        }
+    }
 }

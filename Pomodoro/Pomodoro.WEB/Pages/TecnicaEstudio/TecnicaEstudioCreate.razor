@@ -1,5 +1,51 @@
-﻿<h3>TecnicaEstudioCreate</h3>
+﻿@page "/tecnicas-estudio/create"
+@using Pomodoro.Shared.Dtos
+@using Pomodoro.Shared.Entities
+
+@inject NavigationManager navigationManager
+@inject SweetAlertService swal
+@inject IRepository repository
+
+<h3>Crear Nueva Técnica de Estudio</h3>
+
+<EditForm Model="@tecnicaEstudioDto" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <InputText id="nombre" class="form-control" @bind-Value="tecnicaEstudioDto.Nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="tecnicaEstudioDto.Descripcion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="beneficios" class="form-label">Beneficios</label>
+        <InputTextArea id="beneficios" class="form-control" @bind-Value="tecnicaEstudioDto.Beneficios" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear Técnica de Estudio</button>
+</EditForm>
 
 @code {
+    private CrearTecnicaEstudioDto tecnicaEstudioDto = new CrearTecnicaEstudioDto();
 
+    private async Task HandleValidSubmit()
+    {
+        // Enviar a la API para crear la nueva técnica de estudio
+        var response = await repository.Post("/api/tecnicas-estudio", tecnicaEstudioDto);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "La técnica de estudio ha sido creada.", SweetAlertIcon.Success);
+            navigationManager.NavigateTo("/tecnicas-estudio");
+        }
+    }
 }
