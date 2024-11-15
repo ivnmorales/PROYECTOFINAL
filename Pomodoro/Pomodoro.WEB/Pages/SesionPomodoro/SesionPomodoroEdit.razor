@@ -1,5 +1,123 @@
-﻿<h3>SesionPomodoroEdit</h3>
+﻿@page "/sesion-pomodoro/edit/{id:int}"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Editar Sesión Pomodoro</h3>
+
+<EditForm Model="@SesionPomodoro" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="duracion" class="form-label">Duración (minutos)</label>
+        <InputNumber id="duracion" class="form-control" @bind-Value="SesionPomodoro.Duracion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="fechaInicio" class="form-label">Fecha de Inicio</label>
+        <InputDate id="fechaInicio" class="form-control" @bind-Value="SesionPomodoro.FechaInicio" />
+    </div>
+
+    <div class="mb-3">
+        <label for="fechaFin" class="form-label">Fecha de Fin</label>
+        <InputDate id="fechaFin" class="form-control" @bind-Value="SesionPomodoro.FechaFin" />
+    </div>
+
+    <div class="mb-3">
+        <label for="estado" class="form-label">Estado</label>
+        <InputText id="estado" class="form-control" @bind-Value="SesionPomodoro.Estado" />
+    </div>
+
+    <div class="mb-3">
+        <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+        <select id="proyecto" class="form-control" @bind="selectedProyectoId" required>
+            <option value="">Seleccione un proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                <option value="@proyecto.Id" selected="@proyecto.Id == SesionPomodoro.ProyectoId">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="tarea" class="form-label">Seleccionar Tarea</label>
+        <select id="tarea" class="form-control" @bind="selectedTareaId" required>
+            <option value="">Seleccione una tarea</option>
+            @foreach (var tarea in tareas)
+            {
+                <option value="@tarea.Id" selected="@tarea.Id == SesionPomodoro.TareaId">@tarea.Titulo</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+</EditForm>
 
 @code {
+    [Parameter] public int Id { get; set; } // ID de la sesión Pomodoro a editar
+    private SesionPomodoro SesionPomodoro { get; set; } = new SesionPomodoro();
+    private List<Proyecto> proyectos; // Lista de proyectos
+    private List<Tarea> tareas; // Lista de tareas
+    private int selectedProyectoId;
+    private int selectedTareaId;
 
+    protected async override Task OnInitializedAsync()
+    {
+        // Obtener la sesión Pomodoro a editar
+        var response = await repository.Get<SesionPomodoro>($"/api/sesionesPomodoro/{Id}");
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            NavigationManager.NavigateTo("/sesiones-pomodoro");
+            return;
+        }
+        SesionPomodoro = response.Response;
+
+        // Asignar ProyectoId y TareaId si no son nulos
+        if (SesionPomodoro.ProyectoId.HasValue)
+        {
+            selectedProyectoId = SesionPomodoro.ProyectoId.Value;
+        }
+        if (SesionPomodoro.TareaId.HasValue)
+        {
+            selectedTareaId = SesionPomodoro.TareaId.Value;
+        }
+
+        // Obtener lista de proyectos y tareas
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error)
+        {
+            proyectos = proyectosResponse.Response;
+        }
+
+        var tareasResponse = await repository.Get<List<Tarea>>("/api/tareas");
+        if (!tareasResponse.Error)
+        {
+            tareas = tareasResponse.Response;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Asignar valores seleccionados al modelo
+        SesionPomodoro.ProyectoId = selectedProyectoId;
+        SesionPomodoro.TareaId = selectedTareaId;
+
+        // Enviar a la API para actualizar la sesión
+        var response = await repository.Put($"/api/sesionesPomodoro/{Id}", SesionPomodoro);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "La sesión Pomodoro ha sido editada.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/sesiones-pomodoro");
+        }
+    }
 }
