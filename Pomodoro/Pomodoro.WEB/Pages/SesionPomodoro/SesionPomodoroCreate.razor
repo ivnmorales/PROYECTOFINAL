@@ -1,5 +1,18 @@
-﻿<h3>SesionPomodoroCreate</h3>
+﻿@page "/sesionesPomodoro/create"
+
+@inject NavigationManager navigationManager
+@inject SweetAlertService swal
+
+<h3>Crear Nueva Sesión Pomodoro</h3>
+
+<SesionPomodoroForm @ref="sesionPomodoroForm" OnFormSubmit="Return" />
 
 @code {
+    private SesionPomodoroForm sesionPomodoroForm; // Referencia al componente del formulario
 
+    private void Return()
+    {
+        // Redirige a la lista de sesiones Pomodoro
+        navigationManager.NavigateTo("/sesionesPomodoro");
+    }
 }
