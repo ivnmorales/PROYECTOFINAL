@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Pomodoro.Shared.Entities;
+
 
 namespace Pomodoro.API.DATA
 {
-    public class DataContext : DbContext
+    public class DataContext : IdentityDbContext<User>
     {
         // Constructor que pasa las opciones al constructor base
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
