@@ -3,9 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Pomodoro.API.DATA;
 using Pomodoro.Shared.Entities;
 using Pomodoro.Shared.Dtos;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Pomodoro.API.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     [Route("/api/recompensas")] // Ruta base del controlador para "Recompensas"
     public class RecompensasController : ControllerBase

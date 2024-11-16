@@ -3,10 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Pomodoro.API.DATA;
 using Pomodoro.Shared.Entities;
 using Pomodoro.Shared.Dtos;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Pomodoro.API.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     [Route("/api/proyectos")]
     public class ProyectosController : ControllerBase
