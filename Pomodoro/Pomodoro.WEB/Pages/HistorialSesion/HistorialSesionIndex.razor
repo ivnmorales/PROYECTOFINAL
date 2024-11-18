@@ -1,116 +1,123 @@
 ﻿@page "/historial-sesiones"
+@using Pomodoro.Shared.Dtos
 @using Pomodoro.Shared.Entities
-@using Pomodoro.WEB.Repositories
 @inject IRepository repository
 @inject SweetAlertService swal
-@inject NavigationManager NavigationManager
+@inject NavigationManager navigationManager
 
 <h3>Lista de Historiales de Sesiones</h3>
 
 <div class="mb-3">
-    <a class="btn btn-warning" href="/historialsesiones/create">Nueva Sesión</a>
+    <a class="btn btn-warning" href="/historialsesiones/create">Nuevo Historial</a>
 </div>
 
-<GenericList MyList="historialesSesiones">
-    <Body>
-        <table class="table table-striped">
-            <thead>
+@if (historialesSesiones is not null && historialesSesiones.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Duración (min)</th>
+                <th>Proyecto</th>
+                <th>Sesión Pomodoro</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var historial in historialesSesiones)
+            {
                 <tr>
-                    <th>Fecha</th>
-                    <th>Duración (min)</th>
-                    <th>Proyecto</th>
-                    <th>Sesión Pomodoro</th>
-                    <th>Acciones</th>
+                    <td>@historial.Fecha.ToShortDateString()</td>
+                    <td>@historial.Duracion</td>
+                    <td>@GetProyectoNombre(historial.ProyectoId)</td> <!-- Muestra el nombre del Proyecto -->
+                    <td>@GetSesionEstado(historial.SesionId)</td>     <!-- Muestra el estado de la sesión Pomodoro -->
+                    <td>
+                        <button class="btn btn-secondary" @onclick="@(() => EditHistorialSesion(historial.Id))">Editar</button>
+                        <button class="btn btn-danger" @onclick="@(() => DeleteHistorialSesion(historial.Id))">Borrar</button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @if (historialesSesiones != null && historialesSesiones.Any())
-                {
-                    @foreach (var historial in historialesSesiones)
-                    {
-                                <tr>
-                                    <td>@historial.Fecha.ToShortDateString()</td>
-                                    <td>@historial.Duracion</td>
-                                    <td>@(historial.Proyecto != null ? historial.Proyecto.Nombre : "N/A")</td> <!-- Mostrar el nombre del proyecto -->
-                                    <td>@(historial.SesionPomodoro != null ? $"{historial.SesionPomodoro.Estado} - {historial.SesionPomodoro.Duracion} min" : "N/A")</td> <!-- Mostrar el estado y duración de la sesión Pomodoro -->
-                                    <td>
-                                        <a class="btn btn-secondary" @onclick="@(() => EditHistorialSesion(historial.Id))">Editar</a>
-                                        <button class="btn btn-danger" @onclick="@(() => DeleteHistorialSesion(historial.Id))">Borrar</button>
-                                    </td>
-                                </tr>
-                    }
-                }
-                else
-                {
-                        <tr>
-                            <td colspan="5" class="text-center">No hay historiales de sesiones disponibles.</td>
-                        </tr>
-                }
-            </tbody>
-        </table>
-    </Body>
-</GenericList>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info text-center">No hay historiales de sesiones disponibles.</div>
+}
 
 @code {
-    public List<HistorialSesion>? historialesSesiones { get; set; }
+    private List<HistorialSesionDto>? historialesSesiones;
+    private List<Proyecto> proyectos = new();
+    private List<SesionPomodoro> sesionesPomodoro = new();
 
-    // Método que se ejecuta al inicializar la página
-    protected async override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        var responseHttp = await repository.Get<List<HistorialSesion>>("/api/historialSesiones"); // Solicita los historiales de sesiones desde la API.
+        var response = await repository.Get<List<HistorialSesionDto>>("/api/historialSesiones");
 
-        if (responseHttp.Error)
+        if (response.Error)
         {
-            var mensajeError = await responseHttp.GetErrorMessage();
+            var mensajeError = await response.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
         }
         else
         {
-            historialesSesiones = responseHttp.Response!;
+            historialesSesiones = response.Response!;
 
-            // Obtén los proyectos y sesiones Pomodoro completos si no los tienes ya cargados
+            // Obtener proyectos y sesiones Pomodoro
             var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
             if (!proyectosResponse.Error)
             {
-                foreach (var historial in historialesSesiones)
-                {
-                    historial.Proyecto = proyectosResponse.Response.FirstOrDefault(p => p.Id == historial.ProyectoId);
-                }
+                proyectos = proyectosResponse.Response;
             }
 
-            var sesionesResponse = await repository.Get<List<SesionPomodoro>>("/api/sesionesPomodoro");
-            if (!sesionesResponse.Error)
+            var sesionesPomodoroResponse = await repository.Get<List<SesionPomodoro>>("/api/sesionesPomodoro");
+            if (!sesionesPomodoroResponse.Error)
             {
-                foreach (var historial in historialesSesiones)
-                {
-                    historial.SesionPomodoro = sesionesResponse.Response.FirstOrDefault(s => s.Id == historial.SesionId);
-                }
+                sesionesPomodoro = sesionesPomodoroResponse.Response;
             }
         }
     }
 
-    // Método para navegar a la página de edición del historial de sesión
-    private async Task EditHistorialSesion(int id)
+    private string GetProyectoNombre(int? proyectoId)
     {
-        NavigationManager.NavigateTo($"/historial-sesion/edit/{id:int}"); // Navega a la página de edición del historial de sesión especificado.
+        if (proyectoId.HasValue)
+        {
+            var proyecto = proyectos.FirstOrDefault(p => p.Id == proyectoId.Value);
+            return proyecto?.Nombre ?? "N/A";
+        }
+        return "N/A";
     }
 
-    // Método para borrar un historial de sesión.
+    private string GetSesionEstado(int? sesionId)
+    {
+        if (sesionId.HasValue)
+        {
+            var sesion = sesionesPomodoro.FirstOrDefault(s => s.Id == sesionId.Value);
+            return sesion?.Estado ?? "N/A";
+        }
+        return "N/A";
+    }
+
+    private void EditHistorialSesion(int id)
+    {
+        navigationManager.NavigateTo($"/historialSesiones/edit/{id}");
+    }
+
     private async Task DeleteHistorialSesion(int id)
     {
-        var respuesta = await swal.FireAsync(new SweetAlertOptions
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
-                Text = "¿Está seguro de que desea borrar este historial de sesión?",
+                Text = "¿Desea eliminar este historial de sesión?",
                 Icon = SweetAlertIcon.Warning,
                 ShowCancelButton = true,
-                ConfirmButtonText = "Sí, borrar",
-                CancelButtonText = "No, cancelar"
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
             });
 
-        if (respuesta.IsConfirmed)
+        if (confirmResult.IsConfirmed)
         {
-            var response = await repository.Delete($"/api/historialSesiones/{id}"); // Solicita la eliminación del historial de sesión.
+            var response = await repository.Delete($"/api/historialSesiones/{id}");
 
             if (response.Error)
             {
@@ -119,8 +126,8 @@
             }
             else
             {
-                await swal.FireAsync("Éxito", "Historial de sesión borrado exitosamente.", SweetAlertIcon.Success);
-                await OnInitializedAsync(); // Refresca la lista
+                await swal.FireAsync("Éxito", "Historial eliminado correctamente.", SweetAlertIcon.Success);
+                await OnInitializedAsync(); // Refresca la lista de sesiones
             }
         }
     }
