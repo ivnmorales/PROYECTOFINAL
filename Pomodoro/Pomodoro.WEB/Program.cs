@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Pomodoro.WEB;
 using Pomodoro.WEB.AuthenticationProviders;
 using Pomodoro.WEB.Repositories;
+using Pomodoro.WEB.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -20,6 +21,10 @@ builder.Services.AddScoped<SweetAlertService>();
 
 builder.Services.AddAuthorizationCore();
 
-builder.Services.AddScoped<AuthenticationStateProvider, AuthenticationProviderTest>();
+builder.Services.AddScoped<AuthenticationProviderJWT>();
+
+builder.Services.AddScoped<AuthenticationStateProvider, AuthenticationProviderJWT>(x => x.GetRequiredService<AuthenticationProviderJWT>());
+
+builder.Services.AddScoped<ILoginService, AuthenticationProviderJWT>(x => x.GetRequiredService<AuthenticationProviderJWT>());
 
 await builder.Build().RunAsync();

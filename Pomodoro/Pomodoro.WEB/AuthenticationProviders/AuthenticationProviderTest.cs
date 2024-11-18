@@ -11,7 +11,7 @@ namespace Pomodoro.WEB.AuthenticationProviders
 
         {
 
-            // Simulación de un retraso de 3 segundos
+           // Simulación de un retraso de 3 segundos
             await Task.Delay(3000);
 
             // Crear una identidad anónima

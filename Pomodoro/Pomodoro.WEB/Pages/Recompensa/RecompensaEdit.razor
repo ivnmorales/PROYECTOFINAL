@@ -1,0 +1,99 @@
+﻿@page "/recompensas/edit/{id:int}"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Editar Recompensa</h3>
+
+@if (Recompensa != null)
+{
+    <EditForm Model="@Recompensa" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <InputText id="nombre" class="form-control" @bind-Value="Recompensa.Nombre" />
+        </div>
+
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <InputTextArea id="descripcion" class="form-control" @bind-Value="Recompensa.Descripcion" />
+        </div>
+
+        @if (proyectos?.Any() == true)
+        {
+            <div class="mb-3">
+                <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+                <select id="proyecto" class="form-control" @bind="selectedProyectoId" required>
+                    <option value="">Seleccione un proyecto</option>
+                    @foreach (var proyecto in proyectos)
+                    {
+                        <option value="@proyecto.Id" selected="@proyecto.Id == Recompensa.ProyectoId">@proyecto.Nombre</option>
+                    }
+                </select>
+            </div>
+        }
+
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    </EditForm>
+}
+else
+{
+    <p>Cargando...</p>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Recompensa? Recompensa { get; set; }
+    private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
+    private int selectedProyectoId;
+
+    protected async override Task OnInitializedAsync()
+    {
+        // Obtener la recompensa a editar
+        var response = await repository.Get<Recompensa>($"/api/recompensas/{Id}");
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            NavigationManager.NavigateTo("/recompensas");
+            return;
+        }
+        Recompensa = response.Response;
+
+        // Asignar ProyectoId si es que existe
+        if (Recompensa.ProyectoId.HasValue)
+        {
+            selectedProyectoId = Recompensa.ProyectoId.Value;
+        }
+
+        // Obtener lista de proyectos
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error && proyectosResponse.Response is not null)
+        {
+            proyectos = proyectosResponse.Response;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Asignar el ProyectoId seleccionado al modelo
+        Recompensa.ProyectoId = selectedProyectoId;
+
+        // Enviar los cambios a la API para actualizar la recompensa
+        var response = await repository.Put($"/api/recompensas/{Id}", Recompensa);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "La recompensa ha sido editada.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/recompensas");
+        }
+    }
+}

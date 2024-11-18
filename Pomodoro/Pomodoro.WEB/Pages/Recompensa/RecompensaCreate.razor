@@ -1,0 +1,71 @@
+﻿@page "/recompensas/create"
+@using Pomodoro.Shared.Dtos
+
+@inject NavigationManager navigationManager
+@inject SweetAlertService swal
+@inject IRepository repository
+
+<h3>Crear Nueva Recompensa</h3>
+
+<EditForm Model="@nuevaRecompensa" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <InputText id="nombre" class="form-control" @bind-Value="nuevaRecompensa.Nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="nuevaRecompensa.Descripcion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+        <select id="proyecto" class="form-control" @bind="selectedProyectoId">
+            <option value="">Seleccione un proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                <option value="@proyecto.Id">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear Recompensa</button>
+</EditForm>
+
+@code {
+    private CrearRecompensaDto nuevaRecompensa = new CrearRecompensaDto(); // Nuevo DTO para crear recompensa
+    private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
+    private int selectedProyectoId; // Proyecto seleccionado para la recompensa
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Obtener lista de proyectos desde la API
+        var response = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!response.Error && response.Response is not null)
+        {
+            proyectos = response.Response;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Asignar ProyectoId desde la selección
+        nuevaRecompensa.ProyectoId = selectedProyectoId;
+
+        // Enviar la nueva recompensa a la API para su creación
+        var response = await repository.Post("/api/recompensas", nuevaRecompensa);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "La recompensa ha sido creada exitosamente.", SweetAlertIcon.Success);
+            navigationManager.NavigateTo("/recompensas");
+        }
+    }
+}

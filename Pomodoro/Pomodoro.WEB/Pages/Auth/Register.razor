@@ -1,0 +1,143 @@
+﻿@page "/Register"
+
+@using Pomodoro.Shared.Dtos;
+@using Pomodoro.Shared.Enums;
+@using Pomodoro.WEB.AuthenticationProviders;
+@using Pomodoro.WEB.Services;
+
+@inject IRepository repository
+@inject SweetAlertService sweetAlertService
+@inject NavigationManager navigationManager
+@inject ILoginService loginService
+
+<h3 class="text-center text-primary">Registrar Nuevo Usuario</h3>
+
+<EditForm Model="userDTO" OnValidSubmit="CreateUserAsync">
+    <DataAnnotationsValidator />
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 rounded-4" style="background-color: #fff1f1;">
+                <div class="card-header text-center" style="background-color: #f44336; color: white; border-bottom: 2px solid #e0e0e0;">
+                    <span>
+                        <i class="oi oi-person" style="font-size: 24px;"></i>
+                        <strong>Registrar Nuevo Usuario</strong>
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label>Documento:</label>
+                        <div>
+                            <InputText class="form-control" @bind-Value="userDTO.Document" placeholder="Ingrese su documento" style="border-color: #f44336;" />
+                            <ValidationMessage For="@(() => userDTO.Document)" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Nombres:</label>
+                        <div>
+                            <InputText class="form-control" @bind-Value="userDTO.FirstName" placeholder="Ingrese su nombre" style="border-color: #f44336;" />
+                            <ValidationMessage For="@(() => userDTO.FirstName)" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Apellidos:</label>
+                        <div>
+                            <InputText class="form-control" @bind-Value="userDTO.LastName" placeholder="Ingrese sus apellidos" style="border-color: #f44336;" />
+                            <ValidationMessage For="@(() => userDTO.LastName)" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Teléfono:</label>
+                        <div>
+                            <InputText class="form-control" @bind-Value="userDTO.PhoneNumber" placeholder="Ingrese su teléfono" style="border-color: #f44336;" />
+                            <ValidationMessage For="@(() => userDTO.PhoneNumber)" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Email:</label>
+                        <div>
+                            <InputText class="form-control" @bind-Value="userDTO.Email" placeholder="Ingrese su correo electrónico" style="border-color: #f44336;" />
+                            <ValidationMessage For="@(() => userDTO.Email)" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Foto de perfil:</label>
+                        <InputImg Label="Foto" ImageSelected="ImageSelected" ImageURL="@imageUrl" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Contraseña:</label>
+                        <div>
+                            <InputText type="password" class="form-control" @bind-Value="userDTO.Password" placeholder="Ingrese su contraseña" style="border-color: #f44336;" />
+                            <ValidationMessage For="@(() => userDTO.Password)" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Confirmación de contraseña:</label>
+                        <div>
+                            <InputText type="password" class="form-control" @bind-Value="userDTO.PasswordConfirm" placeholder="Confirme su contraseña" style="border-color: #f44336;" />
+                            <ValidationMessage For="@(() => userDTO.PasswordConfirm)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer text-center">
+                    <button class="btn btn-danger w-100" type="submit" style="background-color: #e57373; border-color: #f44336;">
+                        Registrar Usuario
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private UserDTO userDTO = new();
+    private string? imageUrl;
+
+    private async Task CreateUserAsync()
+    {
+        if (userDTO.Password != userDTO.PasswordConfirm)
+        {
+            await sweetAlertService.FireAsync("Error", "Las contraseñas no coinciden.", SweetAlertIcon.Error);
+            return;
+        }
+
+        userDTO.UserName = userDTO.Email;
+        userDTO.UserType = UserType.Admin;
+
+        var responseHttp = await repository.Post("/api/accounts/CreateUser", userDTO);
+
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessage();
+            await sweetAlertService.FireAsync("Error", message ?? "Error desconocido", SweetAlertIcon.Error);
+            return;
+        }
+
+        await sweetAlertService.FireAsync("Confirmación", "Su cuenta ha sido creada con éxito. Se le ha enviado un correo electrónico con instrucciones para activar su usuario.", SweetAlertIcon.Info);
+        navigationManager.NavigateTo("/");
+    }
+
+    private void ImageSelected(string imagenBase64)
+    {
+        userDTO.Photo = imagenBase64;
+        imageUrl = null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(userDTO.Photo))
+        {
+            imageUrl = userDTO.Photo;
+            userDTO.Photo = null;
+        }
+    }
+}
