@@ -1,17 +1,30 @@
-﻿@inherits LayoutComponentBase
+﻿@using Pomodoro.WEB.Shared
+@inherits LayoutComponentBase
 @inject NavigationManager Navigation
 
 <div class="page">
-    @* Only show the sidebar on specific pages *@
+    @* Sidebar visible solo en ciertas páginas *@
     @if (IsSidebarVisible())
     {
-            <div class="sidebar">
-                <NavMenu />
-            </div>
+        <div class="sidebar">
+            <NavMenu />
+        </div>
     }
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row px-4 d-flex justify-content-between align-items-center">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="user-info d-flex align-items-center">
+                        <span>Hola, @context.User.Identity!.Name</span>
+                        <a href="Logout" class="nav-link btn btn-link">Cerrar Sesión</a>
+                    </div>
+                </Authorized>
+
+                <NotAuthorized>
+                    @* No se muestra nada en el caso de que no esté autorizado *@
+                </NotAuthorized>
+            </AuthorizeView>
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 
@@ -30,6 +43,7 @@
                currentUri.Contains("tareas") ||
                currentUri.Contains("sesionespomodoro") ||
                currentUri.Contains("historial-sesiones") ||
-               currentUri.Contains("tecnicas-estudio");
+               currentUri.Contains("tecnicas-estudio") ||
+               currentUri.Contains("recompensas");
     }
 }
