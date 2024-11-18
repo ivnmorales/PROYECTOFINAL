@@ -1,39 +1,85 @@
 ﻿@page "/historialsesiones/create"
+@using Pomodoro.Shared.Dtos
 
 @inject NavigationManager navigationManager
 @inject IRepository repository
 @inject SweetAlertService swal
 
+
 <h3>Crear Nuevo Historial de Sesión</h3>
 
-<HistorialSesionForm @ref="historialSesionForm" OnFormSubmit="Create" ReturnAction="Return" />
+<EditForm Model="nuevoHistorialSesion" OnValidSubmit="Create">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="fecha" class="form-label">Fecha</label>
+        <InputDate id="fecha" class="form-control" @bind-Value="nuevoHistorialSesion.Fecha" />
+    </div>
+
+    <div class="mb-3">
+        <label for="duracion" class="form-label">Duración (minutos)</label>
+        <InputNumber id="duracion" class="form-control" @bind-Value="nuevoHistorialSesion.Duracion" />
+    </div>
+
+    <div class="mb-3">
+        <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+        <select id="proyecto" class="form-control" @bind="nuevoHistorialSesion.ProyectoId">
+            <option value="">Seleccione un proyecto</option>
+            @foreach (var proyecto in proyectos)
+            {
+                <option value="@proyecto.Id">@proyecto.Nombre</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="sesionPomodoro" class="form-label">Seleccionar Sesión Pomodoro</label>
+        <select id="sesionPomodoro" class="form-control" @bind="nuevoHistorialSesion.SesionId" required>
+            <option value="">Seleccione una sesión Pomodoro</option>
+            @foreach (var sesion in sesionesPomodoro)
+            {
+                <option value="@sesion.Id">@($"{sesion.Estado} - {sesion.Duracion} min")</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear Historial</button>
+</EditForm>
 
 @code {
-    private HistorialSesionForm historialSesionForm; // Referencia al componente del formulario
+    private CrearHistorialSesionDto nuevoHistorialSesion = new CrearHistorialSesionDto();
+    private List<Proyecto> proyectos = new();
+    private List<SesionPomodoro> sesionesPomodoro = new();
 
-    private async Task Create()
+    protected async override Task OnInitializedAsync()
     {
-        // Envía la solicitud POST para crear el nuevo historial de sesión
-        var responseHTTP = await repository.Post("api/historialSesiones", historialSesionForm.HistorialSesion);
-
-        // Verifica si hay un error
-        if (responseHTTP.Error)
+        // Cargar la lista de proyectos
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error)
         {
-            // Muestra un mensaje de error
-            var mensajeError = await responseHTTP.GetErrorMessage();
-            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            proyectos = proyectosResponse.Response;
         }
-        else
+
+        // Cargar la lista de sesiones Pomodoro
+        var sesionesResponse = await repository.Get<List<SesionPomodoro>>("/api/sesionesPomodoro");
+        if (!sesionesResponse.Error)
         {
-            // Si la creación es exitosa, muestra el mensaje de éxito y redirige
-            await swal.FireAsync("Éxito", "Historial de sesión creado exitosamente.", SweetAlertIcon.Success);
-            navigationManager.NavigateTo("/historialsesiones"); // Redirige a la lista de historiales
+            sesionesPomodoro = sesionesResponse.Response;
         }
     }
 
-    private void Return()
+    private async Task Create()
     {
-        // Redirige a la lista de historiales sin guardar
+        var response = await repository.Post("/api/historialSesiones", nuevoHistorialSesion);
+        if (response.Error)
+        {
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            return;
+        }
+
+        await swal.FireAsync("Éxito", "Historial de sesión creado exitosamente.", SweetAlertIcon.Success);
         navigationManager.NavigateTo("/historialsesiones");
     }
 }
