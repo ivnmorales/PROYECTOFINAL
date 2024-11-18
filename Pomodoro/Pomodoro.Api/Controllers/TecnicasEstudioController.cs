@@ -19,7 +19,7 @@ namespace Pomodoro.API.Controllers
         {
             _context = context;
         }
-
+        
         // Obtiene todas las técnicas de estudio
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TecnicaEstudioDto>>> GetTecnicasEstudio()

@@ -1,0 +1,114 @@
+﻿@page "/recompensas"
+@using Pomodoro.Shared.Dtos
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+<h3>Lista de Recompensas</h3>
+
+<div class="mb-3">
+    <a class="btn btn-warning" href="/recompensas/create">Nueva Recompensa</a>
+</div>
+
+<GenericList MyList="recompensas">
+    <Body>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Proyecto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (recompensas != null && recompensas.Any())
+                {
+                    @foreach (var recompensa in recompensas)
+                    {
+                        <tr>
+                            <td>@recompensa.Nombre</td>
+                            <td>@recompensa.Descripcion</td>
+                            <td>@(recompensa.ProyectoId != null ? proyectos.FirstOrDefault(p => p.Id == recompensa.ProyectoId)?.Nombre : "N/A")</td>
+                            <td>
+                                <a class="btn btn-secondary" @onclick="@(() => EditRecompensa(recompensa.Id))">Editar</a>
+                                <button class="btn btn-danger" @onclick="@(() => DeleteRecompensa(recompensa.Id))">Borrar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center">No hay recompensas disponibles.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </Body>
+</GenericList>
+
+@code {
+    public List<RecompensaDto>? recompensas { get; set; }
+    private List<Proyecto> proyectos = new();
+
+    // Método que se ejecuta al inicializar la página
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHttp = await repository.Get<List<RecompensaDto>>("/api/recompensas");
+
+        if (responseHttp.Error)
+        {
+            var mensajeError = await responseHttp.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            recompensas = responseHttp.Response!;
+
+            // Cargar los proyectos completos si aún no están cargados
+            var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+            if (!proyectosResponse.Error)
+            {
+                proyectos = proyectosResponse.Response;
+            }
+        }
+    }
+
+    // Método para navegar a la página de edición de una recompensa
+    private void EditRecompensa(int id)
+    {
+        NavigationManager.NavigateTo($"/recompensas/edit/{id}");
+    }
+
+    // Método para borrar una recompensa
+    private async Task DeleteRecompensa(int id)
+    {
+        var respuesta = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea borrar esta recompensa?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "No, cancelar"
+            });
+
+        if (respuesta.IsConfirmed)
+        {
+            var response = await repository.Delete($"/api/recompensas/{id}");
+
+            if (response.Error)
+            {
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                await swal.FireAsync("Éxito", "Recompensa borrada exitosamente.", SweetAlertIcon.Success);
+                await OnInitializedAsync(); // Refresca la lista de recompensas
+            }
+        }
+    }
+}

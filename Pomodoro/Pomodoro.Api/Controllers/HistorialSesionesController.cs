@@ -20,6 +20,7 @@ namespace Pomodoro.API.Controllers
             _context = context;
         }
 
+       
         // Obtiene todos los historiales de sesiones
         [HttpGet]
         public async Task<ActionResult<IEnumerable<HistorialSesionDto>>> GetHistorialSesiones()
