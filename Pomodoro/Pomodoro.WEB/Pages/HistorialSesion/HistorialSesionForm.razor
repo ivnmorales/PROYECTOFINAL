@@ -10,7 +10,7 @@
 
     <div class="form-group">
         <label for="proyecto">Proyecto</label>
-        <select class="form-control" @bind="selectedProyectoId">
+        <select class="form-control" @bind="HistorialSesion.ProyectoId">
             <option value="">Seleccionar Proyecto</option>
             @foreach (var proyecto in proyectos)
             {
@@ -21,7 +21,7 @@
 
     <div class="form-group">
         <label for="sesionPomodoro">Sesión Pomodoro</label>
-        <select class="form-control" @bind="selectedSesionPomodoroId">
+        <select class="form-control" @bind="HistorialSesion.SesionId">
             <option value="">Seleccionar Sesión Pomodoro</option>
             @foreach (var sesion in sesionesPomodoro)
             {
@@ -32,12 +32,12 @@
 
     <div class="form-group">
         <label for="fecha">Fecha</label>
-        <InputDate class="form-control" @bind-Value="HistorialSesion.Fecha" />
+        <InputDate id="fecha" class="form-control" @bind-Value="HistorialSesion.Fecha" />
     </div>
 
     <div class="form-group">
         <label for="duracion">Duración (minutos)</label>
-        <InputNumber class="form-control" @bind-Value="HistorialSesion.Duracion" />
+        <InputNumber id="duracion" class="form-control" @bind-Value="HistorialSesion.Duracion" />
     </div>
 
     <button type="submit" class="btn btn-primary">Guardar</button>
@@ -45,19 +45,18 @@
 </EditForm>
 
 @code {
-    [Parameter] public EventCallback OnFormSubmit { get; set; }
     [Parameter] public Action ReturnAction { get; set; }
 
     public HistorialSesion HistorialSesion { get; set; } = new HistorialSesion();
     private EditContext editContext;
 
-    private List<Proyecto> proyectos; // Lista de proyectos
-    private List<SesionPomodoro> sesionesPomodoro; // Lista de sesiones Pomodoro
-    private int selectedProyectoId; // Proyecto seleccionado
-    private int selectedSesionPomodoroId; // Sesión Pomodoro seleccionada
+    private List<Proyecto> proyectos = new();
+    private List<SesionPomodoro> sesionesPomodoro = new();
 
     protected override async Task OnInitializedAsync()
     {
+        editContext = new EditContext(HistorialSesion);
+
         var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
         if (!proyectosResponse.Error)
         {
@@ -69,20 +68,20 @@
         {
             sesionesPomodoro = sesionesResponse.Response;
         }
-
-        editContext = new EditContext(HistorialSesion);
     }
 
     private async Task HandleValidSubmit()
     {
-        // Asocia el proyecto y la sesión elegidos
-        HistorialSesion.ProyectoId = selectedProyectoId;
-        HistorialSesion.SesionId = selectedSesionPomodoroId;
-
-        // Invoca el evento OnFormSubmit
-        if (OnFormSubmit.HasDelegate)
+        var response = await repository.Post("/api/historialSesiones", HistorialSesion);
+        if (response.Error)
         {
-            await OnFormSubmit.InvokeAsync(); // Envía el evento de submit
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            await swal.FireAsync("Éxito", "Historial de sesión guardado exitosamente.", SweetAlertIcon.Success);
+            ReturnAction?.Invoke();
         }
     }
 }
