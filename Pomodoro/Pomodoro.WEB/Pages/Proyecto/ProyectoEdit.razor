@@ -5,6 +5,9 @@
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Editar Proyecto</h3>
 
 <EditForm Model="@Proyecto" OnValidSubmit="HandleValidSubmit">
@@ -54,13 +57,28 @@
         }
         else
         {
+            // Muestra un mensaje de éxito y redirige a la lista
             await swal.FireAsync("Éxito", "El proyecto ha sido editado.", SweetAlertIcon.Success);
             NavigationManager.NavigateTo("/proyectos");
         }
     }
 
-    private void CancelarEdicion()
+    private async Task CancelarEdicion()
     {
-        NavigationManager.NavigateTo("/proyectos");
+        // Muestra un mensaje emergente antes de redirigir
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea cancelar los cambios?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+
+        if (confirmResult.IsConfirmed)
+        {
+            NavigationManager.NavigateTo("/proyectos"); // Redirige a la lista de proyectos
+        }
     }
 }

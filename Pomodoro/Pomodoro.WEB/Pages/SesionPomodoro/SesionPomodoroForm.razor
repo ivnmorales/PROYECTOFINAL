@@ -52,12 +52,11 @@
     </div>
 
     <button type="submit" class="btn btn-primary" disabled="@isSubmitting">Guardar</button>
-    <button type="button" class="btn btn-secondary" @onclick="ReturnAction">Cancelar</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
 </EditForm>
 
 @code {
     [Parameter] public EventCallback OnFormSubmit { get; set; }
-    [Parameter] public Action ReturnAction { get; set; }
 
     public CrearSesionPomodoroDto Sesion { get; set; } = new CrearSesionPomodoroDto();
     private EditContext editContext;
@@ -109,5 +108,14 @@
             await swal.FireAsync("Éxito", "Sesión Pomodoro guardada exitosamente.", SweetAlertIcon.Success);
             await OnFormSubmit.InvokeAsync(); // This should redirect or take any necessary action
         }
+    }
+
+    private async Task Cancel()
+    {
+        // Muestra ventana emergente al cancelar
+        await swal.FireAsync("Operación Cancelada", "No se guardaron cambios.", SweetAlertIcon.Warning);
+
+        // Redirige a la lista de sesiones Pomodoro después de la alerta
+        navigationManager.NavigateTo("/sesionesPomodoro");
     }
 }

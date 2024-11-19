@@ -1,9 +1,12 @@
-﻿@page "/tecnica-estudio/edit/{id:int}"
+﻿@page "/tecnicas-estudio/edit/{id:int}"
 @using Pomodoro.Shared.Entities
 @using Pomodoro.WEB.Repositories
 @inject IRepository repository
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>Editar Técnica de Estudio</h3>
 
@@ -27,6 +30,9 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+
+    <!-- Cancel Button -->
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
 </EditForm>
 
 @code {
@@ -49,7 +55,6 @@
 
     private async Task HandleValidSubmit()
     {
-        // Enviar a la API para actualizar la técnica de estudio
         var response = await repository.Put($"/api/tecnicas-estudio/{Id}", tecnicaEstudio);
         if (response.Error)
         {
@@ -59,6 +64,25 @@
         else
         {
             await swal.FireAsync("Éxito", "La técnica de estudio ha sido editada.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/tecnicas-estudio");
+        }
+    }
+
+    // Cancel operation
+    private async Task Cancel()
+    {
+        var result = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "¿Estás seguro?",
+                Text = "Si cancelas, se perderán los cambios no guardados.",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, cancelar",
+                CancelButtonText = "No, volver"
+            });
+
+        if (result.IsConfirmed)
+        {
             NavigationManager.NavigateTo("/tecnicas-estudio");
         }
     }
