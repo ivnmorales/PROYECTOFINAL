@@ -6,6 +6,9 @@
 @inject SweetAlertService swal
 @inject IRepository repository
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Crear Nueva Técnica de Estudio</h3>
 
 <EditForm Model="@tecnicaEstudioDto" OnValidSubmit="HandleValidSubmit">
@@ -28,14 +31,16 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Crear Técnica de Estudio</button>
+
+    <!-- Cancel Button -->
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
 </EditForm>
-//
+
 @code {
     private CrearTecnicaEstudioDto tecnicaEstudioDto = new CrearTecnicaEstudioDto();
 
     private async Task HandleValidSubmit()
     {
-        // Enviar a la API para crear la nueva técnica de estudio
         var response = await repository.Post("/api/tecnicas-estudio", tecnicaEstudioDto);
         if (response.Error)
         {
@@ -45,6 +50,25 @@
         else
         {
             await swal.FireAsync("Éxito", "La técnica de estudio ha sido creada.", SweetAlertIcon.Success);
+            navigationManager.NavigateTo("/tecnicas-estudio");
+        }
+    }
+
+    // Cancel operation
+    private async Task Cancel()
+    {
+        var result = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "¿Estás seguro?",
+                Text = "Si cancelas, se perderán los cambios no guardados.",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, cancelar",
+                CancelButtonText = "No, volver"
+            });
+
+        if (result.IsConfirmed)
+        {
             navigationManager.NavigateTo("/tecnicas-estudio");
         }
     }

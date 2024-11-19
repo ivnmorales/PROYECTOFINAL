@@ -5,6 +5,9 @@
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Editar Recompensa</h3>
 
 @if (Recompensa != null)
@@ -38,6 +41,7 @@
         }
 
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancelar</button>
     </EditForm>
 }
 else
@@ -48,12 +52,11 @@ else
 @code {
     [Parameter] public int Id { get; set; }
     private Recompensa? Recompensa { get; set; }
-    private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
+    private List<Proyecto> proyectos = new();
     private int selectedProyectoId;
 
     protected async override Task OnInitializedAsync()
     {
-        // Obtener la recompensa a editar
         var response = await repository.Get<Recompensa>($"/api/recompensas/{Id}");
         if (response.Error)
         {
@@ -64,13 +67,11 @@ else
         }
         Recompensa = response.Response;
 
-        // Asignar ProyectoId si es que existe
         if (Recompensa.ProyectoId.HasValue)
         {
             selectedProyectoId = Recompensa.ProyectoId.Value;
         }
 
-        // Obtener lista de proyectos
         var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
         if (!proyectosResponse.Error && proyectosResponse.Response is not null)
         {
@@ -80,19 +81,49 @@ else
 
     private async Task HandleValidSubmit()
     {
-        // Asignar el ProyectoId seleccionado al modelo
-        Recompensa.ProyectoId = selectedProyectoId;
+        // Confirmación antes de guardar los cambios
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea guardar los cambios?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
 
-        // Enviar los cambios a la API para actualizar la recompensa
-        var response = await repository.Put($"/api/recompensas/{Id}", Recompensa);
-        if (response.Error)
+        if (confirmResult.IsConfirmed)
         {
-            var mensajeError = await response.GetErrorMessage();
-            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            Recompensa.ProyectoId = selectedProyectoId;
+
+            var response = await repository.Put($"/api/recompensas/{Id}", Recompensa);
+            if (response.Error)
+            {
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                await swal.FireAsync("Éxito", "La recompensa ha sido editada.", SweetAlertIcon.Success);
+                NavigationManager.NavigateTo("/recompensas");
+            }
         }
-        else
+    }
+
+    private async Task CancelEdit()
+    {
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea cancelar la operación?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+
+        if (confirmResult.IsConfirmed)
         {
-            await swal.FireAsync("Éxito", "La recompensa ha sido editada.", SweetAlertIcon.Success);
             NavigationManager.NavigateTo("/recompensas");
         }
     }

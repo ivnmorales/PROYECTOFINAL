@@ -5,54 +5,76 @@
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Lista de Proyectos</h3>
 
-<div class="mb-3">
-    <a class="btn btn-primary" href="/proyectos/create">Nuevo Proyecto</a>
-</div>
+@if (proyectos == null)
+{
+    <div class="spinner" />
+}
+else
+{
+    <GenericList MyList="proyectos">
+        <Body>
+            <div class="card">
+                <div class="card-header">
+                    <span>
+                        <i class="oi oi-briefcase"></i> Proyectos
+                        <a class="btn btn-sm btn-success float-end" href="/proyectos/create">
+                            <i class="oi oi-plus"></i> Nuevo Proyecto
+                        </a>
+                    </span>
+                </div>
 
-<GenericList MyList="proyectos">
-    <Body>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Fecha de Creación</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (proyectos != null && proyectos.Any())
-                {
-                    @foreach (var proyecto in proyectos)
-                    {
-                        <tr>
-                            <td>@proyecto.Nombre</td>
-                            <td>@proyecto.Descripcion</td>
-                            <td>@proyecto.FechaCreacion.ToShortDateString()</td>
-                            <td>
-                                <a class="btn btn-secondary" @onclick="@(() => EditProyecto(proyecto.Id))">Editar</a>
-                                <button class="btn btn-danger" @onclick="@(() => DeleteProyecto(proyecto.Id))">Borrar</button>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="4" class="text-center">No hay proyectos disponibles.</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </Body>
-</GenericList>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Fecha de Creación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (proyectos.Any())
+                            {
+                                @foreach (var proyecto in proyectos)
+                                {
+                                    <tr>
+                                        <td>@proyecto.Nombre</td>
+                                        <td>@proyecto.Descripcion</td>
+                                        <td>@proyecto.FechaCreacion.ToShortDateString()</td>
+                                        <td>
+                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditProyecto(proyecto.Id))">
+                                                <i class="oi oi-pencil"></i> Editar
+                                            </a>
+                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteProyecto(proyecto.Id))">
+                                                <i class="oi oi-trash"></i> Borrar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay proyectos disponibles.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </Body>
+    </GenericList>
+}
 
 @code {
     public List<Proyecto>? proyectos { get; set; }
 
-    // Método que se ejecuta al inicializar la página
     protected async override Task OnInitializedAsync()
     {
         var responseHttp = await repository.Get<List<Proyecto>>("/api/proyectos");
@@ -68,13 +90,11 @@
         }
     }
 
-    // Método para navegar a la página de edición del proyecto
     private void EditProyecto(int id)
     {
         NavigationManager.NavigateTo($"/proyectos/edit/{id}");
     }
 
-    // Método para borrar un proyecto
     private async Task DeleteProyecto(int id)
     {
         var respuesta = await swal.FireAsync(new SweetAlertOptions
@@ -99,7 +119,7 @@
             else
             {
                 await swal.FireAsync("Éxito", "Proyecto borrado exitosamente.", SweetAlertIcon.Success);
-                await OnInitializedAsync(); // Refresca la lista
+                await OnInitializedAsync(); // Refresca la lista de proyectos
             }
         }
     }

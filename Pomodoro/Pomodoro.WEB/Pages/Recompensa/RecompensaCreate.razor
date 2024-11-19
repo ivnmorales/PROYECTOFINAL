@@ -5,6 +5,9 @@
 @inject SweetAlertService swal
 @inject IRepository repository
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Crear Nueva Recompensa</h3>
 
 <EditForm Model="@nuevaRecompensa" OnValidSubmit="HandleValidSubmit">
@@ -33,16 +36,16 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Crear Recompensa</button>
+    <button type="button" class="btn btn-secondary" @onclick="CancelCreate">Cancelar</button>
 </EditForm>
 
 @code {
-    private CrearRecompensaDto nuevaRecompensa = new CrearRecompensaDto(); // Nuevo DTO para crear recompensa
-    private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
-    private int selectedProyectoId; // Proyecto seleccionado para la recompensa
+    private CrearRecompensaDto nuevaRecompensa = new CrearRecompensaDto();
+    private List<Proyecto> proyectos = new();
+    private int selectedProyectoId;
 
     protected override async Task OnInitializedAsync()
     {
-        // Obtener lista de proyectos desde la API
         var response = await repository.Get<List<Proyecto>>("/api/proyectos");
         if (!response.Error && response.Response is not null)
         {
@@ -52,19 +55,49 @@
 
     private async Task HandleValidSubmit()
     {
-        // Asignar ProyectoId desde la selección
-        nuevaRecompensa.ProyectoId = selectedProyectoId;
+        // Confirmación antes de crear
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea crear esta recompensa?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
 
-        // Enviar la nueva recompensa a la API para su creación
-        var response = await repository.Post("/api/recompensas", nuevaRecompensa);
-        if (response.Error)
+        if (confirmResult.IsConfirmed)
         {
-            var mensajeError = await response.GetErrorMessage();
-            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            nuevaRecompensa.ProyectoId = selectedProyectoId;
+
+            var response = await repository.Post("/api/recompensas", nuevaRecompensa);
+            if (response.Error)
+            {
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                await swal.FireAsync("Éxito", "La recompensa ha sido creada exitosamente.", SweetAlertIcon.Success);
+                navigationManager.NavigateTo("/recompensas");
+            }
         }
-        else
+    }
+
+    private async Task CancelCreate()
+    {
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea cancelar la operación?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+
+        if (confirmResult.IsConfirmed)
         {
-            await swal.FireAsync("Éxito", "La recompensa ha sido creada exitosamente.", SweetAlertIcon.Success);
             navigationManager.NavigateTo("/recompensas");
         }
     }

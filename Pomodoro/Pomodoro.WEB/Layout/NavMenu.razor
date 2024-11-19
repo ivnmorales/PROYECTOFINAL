@@ -9,42 +9,53 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
+        <!-- Opción Home: Siempre visible -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="dashboard" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="historial-sesiones">
-                <span class="bi bi-clock-history" aria-hidden="true"></span> Historial Sesión
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="proyectos">
-                <span class="bi bi-kanban" aria-hidden="true"></span> Proyecto
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tareas">
-                <span class="bi bi-check-all" aria-hidden="true"></span> Tareas
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="sesionesPomodoro">
-                <span class="bi bi-alarm" aria-hidden="true"></span> Sesión Pomodoro
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tecnicas-estudio">
-                <span class="bi bi-lightbulb-fill" aria-hidden="true"></span> Técnicas de Estudio
-            </NavLink>
-        </div>
-        <!-- Botón de Recompensas -->
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="recompensas">
-                <span class="bi bi-gift-fill" aria-hidden="true"></span> Recompensas
-            </NavLink>
-        </div>
+
+        <!-- Opciones solo para usuarios autenticados -->
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="historial-sesiones">
+                        <span class="bi bi-clock-history" aria-hidden="true"></span> Historial Sesión
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="proyectos">
+                        <span class="bi bi-kanban" aria-hidden="true"></span> Proyecto
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="tareas">
+                        <span class="bi bi-check-all" aria-hidden="true"></span> Tareas
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="sesionesPomodoro">
+                        <span class="bi bi-alarm" aria-hidden="true"></span> Sesión Pomodoro
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="tecnicas-estudio">
+                        <span class="bi bi-lightbulb-fill" aria-hidden="true"></span> Técnicas de Estudio
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="recompensas">
+                        <span class="bi bi-gift-fill" aria-hidden="true"></span> Recompensas
+                    </NavLink>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3 text-center text-danger">
+                    <span>No autorizado</span>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 </div>
 

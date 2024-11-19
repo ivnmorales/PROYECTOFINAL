@@ -1,9 +1,12 @@
-﻿@page "/tarea/edit/{id:int}"
+﻿@page "/tareas/edit/{id:int}"
 @using Pomodoro.Shared.Entities
 @using Pomodoro.WEB.Repositories
 @inject IRepository repository
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>Editar Tarea</h3>
 
@@ -38,6 +41,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
 </EditForm>
 
 @code {
@@ -88,6 +92,27 @@
         else
         {
             await swal.FireAsync("Éxito", "La tarea ha sido editada.", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/tareas");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        // Muestra ventana emergente de confirmación al cancelar
+        var confirmResult = await swal.FireAsync(
+            new SweetAlertOptions
+                {
+                    Title = "¿Estás seguro?",
+                    Text = "Se perderán los cambios no guardados.",
+                    Icon = SweetAlertIcon.Warning,
+                    ShowCancelButton = true,
+                    ConfirmButtonText = "Sí, cancelar",
+                    CancelButtonText = "No, seguir editando"
+                });
+
+        // Si el usuario confirma, redirige a la lista de tareas
+        if (confirmResult.IsConfirmed)
+        {
             NavigationManager.NavigateTo("/tareas");
         }
     }

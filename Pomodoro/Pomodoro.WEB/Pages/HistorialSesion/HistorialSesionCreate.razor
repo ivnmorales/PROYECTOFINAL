@@ -1,10 +1,12 @@
-﻿@page "/historialsesiones/create"
+﻿@page "/historial-sesiones/create"
 @using Pomodoro.Shared.Dtos
 
 @inject NavigationManager navigationManager
 @inject IRepository repository
 @inject SweetAlertService swal
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>Crear Nuevo Historial de Sesión</h3>
 
@@ -45,6 +47,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Crear Historial</button>
+    <button type="button" class="btn btn-secondary" @onclick="CancelCreate">Cancelar</button>
 </EditForm>
 
 @code {
@@ -80,6 +83,24 @@
         }
 
         await swal.FireAsync("Éxito", "Historial de sesión creado exitosamente.", SweetAlertIcon.Success);
-        navigationManager.NavigateTo("/historialsesiones");
+        navigationManager.NavigateTo("/historial-sesiones");
+    }
+
+    private async Task CancelCreate()
+    {
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea cancelar la operación?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+
+        if (confirmResult.IsConfirmed)
+        {
+            navigationManager.NavigateTo("/historial-sesiones");
+        }
     }
 }

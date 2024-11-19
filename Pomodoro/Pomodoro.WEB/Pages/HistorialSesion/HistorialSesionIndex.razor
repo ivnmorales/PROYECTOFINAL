@@ -5,44 +5,67 @@
 @inject SweetAlertService swal
 @inject NavigationManager navigationManager
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Lista de Historiales de Sesiones</h3>
 
-<div class="mb-3">
-    <a class="btn btn-warning" href="/historialsesiones/create">Nuevo Historial</a>
-</div>
-
-@if (historialesSesiones is not null && historialesSesiones.Any())
+@if (historialesSesiones == null)
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Duración (min)</th>
-                <th>Proyecto</th>
-                <th>Sesión Pomodoro</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var historial in historialesSesiones)
-            {
-                <tr>
-                    <td>@historial.Fecha.ToShortDateString()</td>
-                    <td>@historial.Duracion</td>
-                    <td>@GetProyectoNombre(historial.ProyectoId)</td> <!-- Muestra el nombre del Proyecto -->
-                    <td>@GetSesionEstado(historial.SesionId)</td>     <!-- Muestra el estado de la sesión Pomodoro -->
-                    <td>
-                        <button class="btn btn-secondary" @onclick="@(() => EditHistorialSesion(historial.Id))">Editar</button>
-                        <button class="btn btn-danger" @onclick="@(() => DeleteHistorialSesion(historial.Id))">Borrar</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="spinner" />
 }
 else
 {
-    <div class="alert alert-info text-center">No hay historiales de sesiones disponibles.</div>
+    <div class="card">
+        <div class="card-header">
+            <span>
+                <i class="oi oi-clock"></i> Historial de Sesiones
+                <a class="btn btn-sm btn-success float-end" href="/historial-sesiones/create">
+                    <i class="oi oi-plus"></i> Nuevo Historial
+                </a>
+            </span>
+        </div>
+
+        <div class="card-body">
+            @if (historialesSesiones.Any())
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Duración (min)</th>
+                            <th>Proyecto</th>
+                            <th>Sesión Pomodoro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var historial in historialesSesiones)
+                        {
+                            <tr>
+                                <td>@historial.Fecha.ToShortDateString()</td>
+                                <td>@historial.Duracion</td>
+                                <td>@GetProyectoNombre(historial.ProyectoId)</td>
+                                <td>@GetSesionEstado(historial.SesionId)</td>
+                                <td>
+                                    <a class="btn btn-secondary btn-sm" @onclick="@(() => EditHistorialSesion(historial.Id))">
+                                        <i class="oi oi-pencil"></i> Editar
+                                    </a>
+                                    <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteHistorialSesion(historial.Id))">
+                                        <i class="oi oi-trash"></i> Borrar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-info text-center">No hay historiales de sesiones disponibles.</div>
+            }
+        </div>
+    </div>
 }
 
 @code {
@@ -100,7 +123,7 @@ else
 
     private void EditHistorialSesion(int id)
     {
-        navigationManager.NavigateTo($"/historialSesiones/edit/{id}");
+        navigationManager.NavigateTo($"/historial-sesiones/edit/{id}");
     }
 
     private async Task DeleteHistorialSesion(int id)

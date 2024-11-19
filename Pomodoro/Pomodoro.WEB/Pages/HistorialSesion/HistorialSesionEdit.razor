@@ -1,9 +1,12 @@
-﻿@page "/historialsesiones/edit/{id:int}"
+﻿@page "/historial-sesiones/edit/{id:int}"
 @using Pomodoro.Shared.Dtos
 
 @inject IRepository repository
 @inject SweetAlertService swal
 @inject NavigationManager navigationManager
+
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>Editar Historial de Sesión</h3>
 
@@ -22,6 +25,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancelar</button>
 </EditForm>
 
 @code {
@@ -55,6 +59,24 @@
         }
 
         await swal.FireAsync("Éxito", "El historial de sesión ha sido actualizado.", SweetAlertIcon.Success);
-        navigationManager.NavigateTo("/historialsesiones");
+        navigationManager.NavigateTo("/historial-sesiones");
+    }
+
+    private async Task CancelEdit()
+    {
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea cancelar la operación?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+
+        if (confirmResult.IsConfirmed)
+        {
+            navigationManager.NavigateTo("/historial-sesiones");
+        }
     }
 }
