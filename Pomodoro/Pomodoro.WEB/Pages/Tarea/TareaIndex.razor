@@ -6,11 +6,12 @@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
+@*// Solo los usuarios con el rol 'Admin' pueden acceder a esta página*@
 @attribute [Authorize(Roles = "Admin")]
 
 <h3>Lista de Tareas</h3>
 
-@if (tareas == null)
+@if (tareas == null) // Si las tareas no han sido cargadas aún
 {
     <div class="spinner" />
 }
@@ -75,35 +76,38 @@ else
 }
 
 @code {
-    public List<TareaDto>? tareas { get; set; }
-    private List<Proyecto> proyectos = new();
-
+    public List<TareaDto>? tareas { get; set; } // Lista de tareas a mostrar
+    private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
+    // Se ejecuta cuando el componente es inicializado
     protected async override Task OnInitializedAsync()
     {
+        // Obtiene la lista de tareas desde la API
         var responseHttp = await repository.Get<List<TareaDto>>("/api/tareas");
 
-        if (responseHttp.Error)
+        if (responseHttp.Error)  // Si hay error al obtener las tareas
+        
         {
             var mensajeError = await responseHttp.GetErrorMessage();
-            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error); // Muestra mensaje de error
         }
-        else
+        else // Si la respuesta fue exitosa
         {
-            tareas = responseHttp.Response!;
+            tareas = responseHttp.Response!; // Asigna las tareas a la lista
 
+            // Obtiene la lista de proyectos desde la API
             var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
             if (!proyectosResponse.Error)
             {
-                proyectos = proyectosResponse.Response;
+                proyectos = proyectosResponse.Response; // Asigna los proyectos a la lista
             }
         }
     }
-
+    // Método para redirigir al usuario a la página de edición de una tarea
     private void EditTarea(int id)
     {
-        NavigationManager.NavigateTo($"/tareas/edit/{id}");
+        NavigationManager.NavigateTo($"/tareas/edit/{id}"); // Redirige a la página de edición con el id de la tarea
     }
-
+    // Método para borrar una tarea
     private async Task DeleteTarea(int id)
     {
         var respuesta = await swal.FireAsync(new SweetAlertOptions
@@ -116,16 +120,17 @@ else
                 CancelButtonText = "No, cancelar"
             });
 
-        if (respuesta.IsConfirmed)
+        if (respuesta.IsConfirmed) // Si el usuario confirma la acción
         {
+            // Realiza la solicitud para borrar la tarea
             var response = await repository.Delete($"/api/tareas/{id}");
 
-            if (response.Error)
+            if (response.Error) // Si hay error al borrar la tarea
             {
                 var mensajeError = await response.GetErrorMessage();
                 await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
-            else
+            else // Si la tarea fue borrada exitosamente
             {
                 await swal.FireAsync("Éxito", "Tarea borrada exitosamente.", SweetAlertIcon.Success);
                 await OnInitializedAsync();
