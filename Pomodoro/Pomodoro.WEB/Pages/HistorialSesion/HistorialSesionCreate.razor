@@ -1,12 +1,17 @@
 ﻿@page "/historial-sesiones/create"
+@* Importa las clases DTO necesarias para trabajar con datos relacionados.*@
 @using Pomodoro.Shared.Dtos
 
-@inject NavigationManager navigationManager
-@inject IRepository repository
-@inject SweetAlertService swal
+@* Inyecta el servicio NavigationManager para manejar la navegación entre páginas.*@
 
-@using Microsoft.AspNetCore.Authorization;
-@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager navigationManager
+@inject IRepository repository // Inyecta el servicio IRepository para realizar peticiones HTTP a la API.
+
+@inject SweetAlertService swal // Inyecta el servicio SweetAlertService para mostrar notificaciones al usuario.
+
+@using Microsoft.AspNetCore.Authorization; @* Importa funcionalidades de autorización para restringir acceso al componente.*@
+@*Restringe el acceso a este componente solo a usuarios con rol de "Admin".*@
+@attribute [Authorize(Roles = "Admin")]   
 
 <h3>Crear Nuevo Historial de Sesión</h3>
 
@@ -51,9 +56,10 @@
 </EditForm>
 
 @code {
+    // Modelo que representa los datos del historial de sesión que se capturan en el formulario.
     private CrearHistorialSesionDto nuevoHistorialSesion = new CrearHistorialSesionDto();
-    private List<Proyecto> proyectos = new();
-    private List<SesionPomodoro> sesionesPomodoro = new();
+    private List<Proyecto> proyectos = new();   // Lista para almacenar los proyectos cargados desde la API.
+    private List<SesionPomodoro> sesionesPomodoro = new(); // Lista para almacenar las sesiones Pomodoro cargadas desde la API.
 
     protected async override Task OnInitializedAsync()
     {
@@ -74,20 +80,25 @@
 
     private async Task Create()
     {
+        // Método para manejar el envío del formulario
+        // Envía los datos del modelo a la API para crear un nuevo historial de sesión.
         var response = await repository.Post("/api/historialSesiones", nuevoHistorialSesion);
         if (response.Error)
         {
+            // Si ocurre un error, muestra un mensaje al usuario.
             var mensajeError = await response.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             return;
         }
-
+        // Si la creación es exitosa, muestra un mensaje y redirige al listado de historiales.
         await swal.FireAsync("Éxito", "Historial de sesión creado exitosamente.", SweetAlertIcon.Success);
         navigationManager.NavigateTo("/historial-sesiones");
     }
 
     private async Task CancelCreate()
     {
+        // Método para manejar la cancelación del formulario.
+        // Muestra una alerta de confirmación al usuario.
         var confirmResult = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -97,7 +108,7 @@
                 ConfirmButtonText = "Sí",
                 CancelButtonText = "No"
             });
-
+        // Si el usuario confirma, redirige al listado de historiales.
         if (confirmResult.IsConfirmed)
         {
             navigationManager.NavigateTo("/historial-sesiones");

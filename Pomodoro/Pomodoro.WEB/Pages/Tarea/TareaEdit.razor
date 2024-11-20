@@ -6,7 +6,8 @@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
-@attribute [Authorize(Roles = "Admin")]
+@*Restringe el acceso a este componente solo a usuarios con el rol de "Admin"*@
+@attribute [Authorize(Roles = "Admin")] 
 
 <h3>Editar Tarea</h3>
 

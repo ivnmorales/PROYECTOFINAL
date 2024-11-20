@@ -1,11 +1,15 @@
 ﻿@page "/proyectos/create"
+@*// Importa los DTOs utilizados en la creación de proyectos.*@
 @using Pomodoro.Shared.Dtos
-
+@*// Inyecta el servicio para manejar la navegación.*@
 @inject NavigationManager navigationManager
+@*// Inyecta el repositorio para interactuar con la API.*@
 @inject IRepository repository
+@*// Inyecta el servicio para mostrar alertas con SweetAlert.*@
 @inject SweetAlertService swal
 
 @using Microsoft.AspNetCore.Authorization;
+@* // Restringe el acceso a esta página a usuarios con el rol "Admin".*@
 @attribute [Authorize(Roles = "Admin")]
 
 <h3>Crear Nuevo Proyecto</h3>
@@ -30,6 +34,7 @@
 
 @code {
     private CrearProyectoDto nuevoProyecto = new CrearProyectoDto();
+    // Modelo para contener los datos del nuevo proyecto.
 
     private async Task Create()
     {

@@ -1,27 +1,29 @@
 ﻿@page "/logout"
 
+@* Importaciones necesarias para el manejo de autenticación y servicios *@
 @using Pomodoro.WEB.AuthenticationProviders;
 @using Pomodoro.WEB.Services
+@* Inyección del servicio de autenticación.*@
+@inject ILoginService loginService // Servicio para manejar la lógica de cierre de sesión.
+// Inyección del servicio de navegación.
+@inject NavigationManager navigationManager // Servicio para redirigir a otras páginas.
 
-@inject ILoginService loginService
-
-@inject NavigationManager navigationManager
 
 
-
+@*Mensaje que se muestra mientras se realiza el cierre de sesión.*@
 <p>Cerrando sesión...</p>
 
 
 
 @code {
-
+    // Método que se ejecuta automáticamente al inicializar el componente.
     protected override async Task OnInitializedAsync()
 
     {
 
-        await loginService.LogoutAsync();
+        await loginService.LogoutAsync(); // Llama al servicio para cerrar la sesión del usuario.
 
-        navigationManager.NavigateTo("/");
+        navigationManager.NavigateTo("/");  // Redirige al usuario a la página principal.
 
     }
 

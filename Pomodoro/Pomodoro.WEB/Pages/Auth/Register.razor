@@ -1,15 +1,15 @@
 ﻿@page "/Register"
-
+@* Importaciones necesarias para DTOs, enums, y servicios relacionados con autenticación y registro.*@
 @using Pomodoro.Shared.Dtos;
 @using Pomodoro.Shared.Enums;
 @using Pomodoro.WEB.AuthenticationProviders;
 @using Pomodoro.WEB.Services;
-
-@inject IRepository repository
-@inject SweetAlertService sweetAlertService
-@inject NavigationManager navigationManager
-@inject ILoginService loginService
-
+@*Inyección de dependencias necesarias.*@
+@inject IRepository repository // Servicio para interactuar con la API.
+@inject SweetAlertService sweetAlertService // Servicio para mostrar alertas.
+@inject NavigationManager navigationManager  // Servicio para navegación.
+@inject ILoginService loginService // Servicio para manejo de autenticación.
+// Título del formulario de registro.
 <h3 class="text-center text-primary">Registrar Nuevo Usuario</h3>
 
 <EditForm Model="userDTO" OnValidSubmit="CreateUserAsync">
@@ -99,33 +99,34 @@
 </EditForm>
 
 @code {
-    private UserDTO userDTO = new();
-    private string? imageUrl;
+    private UserDTO userDTO = new();  // Modelo que representa los datos del usuario.
+    private string? imageUrl; // URL para la previsualización de la imagen de perfil.
 
+    // Método que crea el usuario cuando se envía el formulario.
     private async Task CreateUserAsync()
     {
-        if (userDTO.Password != userDTO.PasswordConfirm)
+        if (userDTO.Password != userDTO.PasswordConfirm)  // Verifica si las contraseñas coinciden.
         {
             await sweetAlertService.FireAsync("Error", "Las contraseñas no coinciden.", SweetAlertIcon.Error);
             return;
         }
-
+        // Configura valores adicionales para el registro del usuario.
         userDTO.UserName = userDTO.Email;
         userDTO.UserType = UserType.Admin;
-
+        // Envía los datos a la API para crear el usuario.
         var responseHttp = await repository.Post("/api/accounts/CreateUser", userDTO);
 
-        if (responseHttp.Error)
+        if (responseHttp.Error) // Manejo de errores si la API devuelve un problema.
         {
             var message = await responseHttp.GetErrorMessage();
             await sweetAlertService.FireAsync("Error", message ?? "Error desconocido", SweetAlertIcon.Error);
             return;
         }
-
+        // Muestra un mensaje de éxito y redirige al usuario a la página principal.
         await sweetAlertService.FireAsync("Confirmación", "Su cuenta ha sido creada con éxito. Se le ha enviado un correo electrónico con instrucciones para activar su usuario.", SweetAlertIcon.Info);
         navigationManager.NavigateTo("/");
     }
-
+    // Método que se ejecuta al seleccionar una imagen de perfil.
     private void ImageSelected(string imagenBase64)
     {
         userDTO.Photo = imagenBase64;
@@ -134,7 +135,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!string.IsNullOrEmpty(userDTO.Photo))
+        if (!string.IsNullOrEmpty(userDTO.Photo)) // Si ya existe una imagen previa, configúrala para previsualización.
         {
             imageUrl = userDTO.Photo;
             userDTO.Photo = null;

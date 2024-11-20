@@ -1,12 +1,18 @@
-﻿@page "/proyectos/edit/{id:int}"
+﻿@*// Define la ruta para la página de edición de proyectos, pasando el ID como parámetro.*@
+@page "/proyectos/edit/{id:int}" 
+@*// Importa las entidades compartidas.*@
 @using Pomodoro.Shared.Entities
+@*// Importa los repositorios para interactuar con la API.*@
 @using Pomodoro.WEB.Repositories
+@*// Inyecta el repositorio para operaciones HTTP.*@
 @inject IRepository repository
 @inject SweetAlertService swal
+@*// Inyecta el servicio para manejar la navegación.*@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
-@attribute [Authorize(Roles = "Admin")]
+@*// Restringe el acceso a usuarios con el rol "Admin"*@
+@attribute [Authorize(Roles = "Admin")] 
 
 <h3>Editar Proyecto</h3>
 
@@ -31,6 +37,7 @@
 @code {
     [Parameter] public int Id { get; set; } // ID del proyecto a editar
     private Proyecto Proyecto { get; set; } = new Proyecto();
+    // Objeto para almacenar los datos del proyecto actual.
 
     protected async override Task OnInitializedAsync()
     {
@@ -38,12 +45,13 @@
         var response = await repository.Get<Proyecto>($"/api/proyectos/{Id}");
         if (response.Error)
         {
+            // Muestra un mensaje de error y redirige si ocurre un problema al cargar los datos.
             var mensajeError = await response.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             NavigationManager.NavigateTo("/proyectos");
             return;
         }
-        Proyecto = response.Response;
+        Proyecto = response.Response; // Asigna los datos obtenidos al modelo
     }
 
     private async Task HandleValidSubmit()
@@ -65,7 +73,7 @@
 
     private async Task CancelarEdicion()
     {
-        // Muestra un mensaje emergente antes de redirigir
+        // Maneja la acción de cancelar la edición.
         var confirmResult = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",

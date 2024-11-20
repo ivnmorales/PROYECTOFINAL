@@ -1,14 +1,15 @@
 ﻿@page "/Login"
-
+@*Importaciones necesarias para DTOs, servicios de autenticación y utilidades.*@
 @using Pomodoro.Shared.Dtos;
 @using Pomodoro.WEB.AuthenticationProviders;
 @using Pomodoro.WEB.Services;
+@*Inyecciones de dependencias necesarias para el componente*@
+@inject IRepository repository  // Servicio para interactuar con la API.
+@inject SweetAlertService sweetAlertService // Servicio para mostrar alertas.
+@inject NavigationManager navigationManager // Servicio para navegar entre páginas.
+@inject ILoginService loginService // Servicio de manejo de autenticación.
 
-@inject IRepository repository
-@inject SweetAlertService sweetAlertService
-@inject NavigationManager navigationManager
-@inject ILoginService loginService
-
+@*Título de la página.*@
 <h3 class="text-center text-primary">Iniciar Sesión</h3>
 
 <EditForm Model="loginDTO" OnValidSubmit="LoginAsync">
@@ -53,19 +54,21 @@
 </EditForm>
 
 @code {
-    private LoginDTO loginDTO = new();
+    private LoginDTO loginDTO = new(); // Inicializa el modelo para el formulario.
 
     private async Task LoginAsync()
     {
+        // Llama a la API para intentar iniciar sesión con las credenciales proporcionadas.
         var responseHttp = await repository.Post<LoginDTO, TokenDTO>("/api/accounts/Login", loginDTO);
 
-        if (responseHttp.Error)
+        if (responseHttp.Error) // Manejo de error si la API responde con un problema.
         {
-            var message = await responseHttp.GetErrorMessage();
-            await sweetAlertService.FireAsync("Error", message ?? "Error al iniciar sesión", SweetAlertIcon.Error);
+            var message = await responseHttp.GetErrorMessage(); // Obtiene el mensaje de error.
+            await sweetAlertService.FireAsync("Error", message ?? "Error al iniciar sesión", SweetAlertIcon.Error); // Muestra un mensaje de error.
+            return;
             return;
         }
-
+        // Si la autenticación es exitosa, guarda el token de usuario y navega al dashboard.
         await loginService.LoginAsync(responseHttp.Response!.Token);
         navigationManager.NavigateTo("/dashboard");
     }

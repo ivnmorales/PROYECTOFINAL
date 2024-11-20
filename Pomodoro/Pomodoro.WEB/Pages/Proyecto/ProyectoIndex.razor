@@ -6,11 +6,12 @@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
-@attribute [Authorize(Roles = "Admin")]
+@*// Restringe el acceso a este componente solo a usuarios con el rol de "Admin"*@
+@attribute [Authorize(Roles = "Admin")] 
 
 <h3>Lista de Proyectos</h3>
 
-@if (proyectos == null)
+@if (proyectos == null) @*// Muestra un spinner mientras se cargan los datos*@
 {
     <div class="spinner" />
 }
@@ -73,30 +74,31 @@ else
 }
 
 @code {
-    public List<Proyecto>? proyectos { get; set; }
-
+    public List<Proyecto>? proyectos { get; set; } // Lista de proyectos cargados desde la API
+    // Método que se ejecuta al inicializar el componente
     protected async override Task OnInitializedAsync()
     {
-        var responseHttp = await repository.Get<List<Proyecto>>("/api/proyectos");
+        var responseHttp = await repository.Get<List<Proyecto>>("/api/proyectos"); // Llama a la API para obtener los proyectos
 
-        if (responseHttp.Error)
+        if (responseHttp.Error) // Manejo de errores en la respuesta de la API
         {
             var mensajeError = await responseHttp.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
         }
         else
         {
-            proyectos = responseHttp.Response!;
+            proyectos = responseHttp.Response!; // Asigna los proyectos obtenidos a la propiedad
         }
     }
-
+    // Método para redirigir al formulario de edición de un proyecto
     private void EditProyecto(int id)
     {
         NavigationManager.NavigateTo($"/proyectos/edit/{id}");
     }
-
+    // Método para eliminar un proyecto
     private async Task DeleteProyecto(int id)
     {
+        // Mostrar alerta de confirmación antes de eliminar
         var respuesta = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -107,16 +109,16 @@ else
                 CancelButtonText = "No, cancelar"
             });
 
-        if (respuesta.IsConfirmed)
+        if (respuesta.IsConfirmed) // Si el usuario confirma, se procede a eliminar
         {
-            var response = await repository.Delete($"/api/proyectos/{id}");
+            var response = await repository.Delete($"/api/proyectos/{id}"); // Llama a la API para eliminar el proyecto
 
-            if (response.Error)
+            if (response.Error) // Manejo de errores al eliminar
             {
                 var mensajeError = await response.GetErrorMessage();
                 await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
-            else
+            else // Muestra un mensaje de éxito y refresca la lista de proyectos
             {
                 await swal.FireAsync("Éxito", "Proyecto borrado exitosamente.", SweetAlertIcon.Success);
                 await OnInitializedAsync(); // Refresca la lista de proyectos

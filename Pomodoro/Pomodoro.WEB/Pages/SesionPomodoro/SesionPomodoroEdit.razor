@@ -6,11 +6,12 @@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
-@attribute [Authorize(Roles = "Admin")]
+@*//Solo los usuarios con rol de "Admin" pueden acceder a esta página*@ 
+@attribute [Authorize(Roles = "Admin")] 
 
 <h3>Editar Sesión Pomodoro</h3>
-
-@if (SesionPomodoro != null)
+@*Si la sesión Pomodoro fue cargada correctamente*@
+@if (SesionPomodoro != null) 
 {
     <EditForm Model="@SesionPomodoro" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
@@ -46,12 +47,12 @@ else
 }
 
 @code {
-    [Parameter] public int Id { get; set; }
-    private SesionPomodoro? SesionPomodoro { get; set; }
+    [Parameter] public int Id { get; set; } //Parámetro para recibir el ID de la sesión Pomodoro a editar
+    private SesionPomodoro? SesionPomodoro { get; set; } // Objeto que almacenará la sesión Pomodoro a editar
     private List<Proyecto> proyectos = new(); // Inicializado como lista vacía
     private List<Tarea> tareas = new();       // Inicializado como lista vacía
-    private int selectedProyectoId;
-    private int selectedTareaId;
+    private int selectedProyectoId; //Variable para almacenar el ID del proyecto seleccionado
+    private int selectedTareaId; //Variable para almacenar el ID de la tarea seleccionada
 
     protected async override Task OnInitializedAsync()
     {

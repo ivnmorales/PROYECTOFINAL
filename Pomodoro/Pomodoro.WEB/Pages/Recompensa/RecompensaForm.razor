@@ -34,33 +34,35 @@
 </EditForm>
 
 @code {
-    [Parameter] public EventCallback OnFormSubmit { get; set; }
-    [Parameter] public Action ReturnAction { get; set; }
+    [Parameter] public EventCallback OnFormSubmit { get; set; } // Callback que se invoca cuando el formulario es enviado correctamente
+    [Parameter] public Action ReturnAction { get; set; } // Acción para cancelar o retornar
 
-    public CrearRecompensaDto Recompensa { get; set; } = new CrearRecompensaDto();
-    private EditContext editContext;
-    private bool isSubmitting = false;
+    public CrearRecompensaDto Recompensa { get; set; } = new CrearRecompensaDto(); // Modelo para la recompensa que se está creando
+    private EditContext editContext; // Contexto de edición para el formulario
+    private bool isSubmitting = false; // Indicador de si el formulario está siendo enviado
 
-    private List<Proyecto> proyectos = new List<Proyecto>();
-    private int? selectedProyectoId;
-
+    private List<Proyecto> proyectos = new List<Proyecto>();  // Lista de proyectos disponibles para seleccionar
+    private int? selectedProyectoId;  // ID del proyecto seleccionado
+   // Método que se ejecuta cuando el componente se inicializa
     protected override async Task OnInitializedAsync()
     {
+        // Inicializa el contexto de edición con el modelo de recompensa
         editContext = new EditContext(Recompensa);
-
+        // Realiza una solicitud para obtener los proyectos disponibles
         var proyectosResponse = await repository.Get<List<Proyecto>>("api/proyectos");
         if (!proyectosResponse.Error)
         {
-            proyectos = proyectosResponse.Response;
+            proyectos = proyectosResponse.Response; // Asigna la lista de proyectos a la variable
         }
     }
-
+    // Método que se ejecuta cuando el formulario es enviado (si los datos son válidos)
     private async Task HandleValidSubmit()
     {
+        // Si el formulario ya está siendo enviado, previene el envío múltiple
         if (isSubmitting)
             return;
 
-        isSubmitting = true;
+        isSubmitting = true;  // Marca como enviando
 
         Recompensa.ProyectoId = selectedProyectoId;
 
@@ -68,14 +70,16 @@
 
         if (response.Error)
         {
+            // Si hay un error en la solicitud, muestra un mensaje de error y permite reintentar
             var errorMsg = await response.GetErrorMessage();
             await swal.FireAsync("Error", errorMsg, SweetAlertIcon.Error);
-            isSubmitting = false; // Allow retry if there was an error
+            isSubmitting = false; // Permite intentar de nuevo
         }
         else
         {
+            // Si la recompensa fue guardada exitosamente, muestra un mensaje de éxito y ejecuta la acción del formulario
             await swal.FireAsync("Éxito", "Recompensa guardada exitosamente.", SweetAlertIcon.Success);
-            await OnFormSubmit.InvokeAsync(); // This should redirect or take any necessary action
+            await OnFormSubmit.InvokeAsync(); // Invoca el callback del formulario (por ejemplo, redirige o actualiza la vista)
         }
     }
 }
