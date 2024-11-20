@@ -6,6 +6,7 @@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
+@*Restringe el acceso a este componente solo a usuarios con el rol de "Admin"*@
 @attribute [Authorize(Roles = "Admin")]
 
 <h3>Lista de Sesiones Pomodoro</h3>
@@ -79,22 +80,24 @@ else
 }
 
 @code {
+    // Lista de sesiones Pomodoro que se cargará desde la API
     public List<SesionPomodoroDto>? sesionesPomodoro { get; set; }
     private List<Proyecto> proyectos = new();
     private List<Tarea> tareas = new();
-
+    // Método que se ejecuta cuando el componente se inicializa
     protected async override Task OnInitializedAsync()
     {
+        // Realiza una solicitud GET para obtener las sesiones Pomodoro desde la API
         var responseHttp = await repository.Get<List<SesionPomodoroDto>>("/api/sesionesPomodoro");
 
-        if (responseHttp.Error)
+        if (responseHttp.Error) //Si la respuesta tiene un error, muestra un mensaje
         {
-            var mensajeError = await responseHttp.GetErrorMessage();
-            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            var mensajeError = await responseHttp.GetErrorMessage(); //Obtiene el mensaje de error
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error); //Muestra la alerta de error
         }
         else
         {
-            sesionesPomodoro = responseHttp.Response!;
+            sesionesPomodoro = responseHttp.Response!; //Asigna las sesiones obtenidas a la propiedad sesionesPomodoro
 
             // Cargar los proyectos y tareas completos si aún no están cargados
             var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
@@ -110,14 +113,15 @@ else
             }
         }
     }
-
+    // Método para redirigir a la página de edición de una sesión Pomodoro
     private void EditSesionPomodoro(int id)
     {
-        NavigationManager.NavigateTo($"/sesionesPomodoro/edit/{id}");
+        NavigationManager.NavigateTo($"/sesionesPomodoro/edit/{id}"); //Redirige al componente de edición pasando el ID de la sesión
     }
-
+    // Método para eliminar una sesión Pomodoro
     private async Task DeleteSesionPomodoro(int id)
     {
+        // Muestra una alerta de confirmación antes de proceder con la eliminación
         var respuesta = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -128,18 +132,19 @@ else
                 CancelButtonText = "No, cancelar"
             });
 
-        if (respuesta.IsConfirmed)
+        if (respuesta.IsConfirmed) //Si el usuario confirma la eliminación
         {
+            // Realiza una solicitud DELETE para eliminar la sesión
             var response = await repository.Delete($"/api/sesionesPomodoro/{id}");
 
-            if (response.Error)
+            if (response.Error) //Si hubo un error durante la eliminación
             {
                 var mensajeError = await response.GetErrorMessage();
                 await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
             else
             {
-                await swal.FireAsync("Éxito", "Sesión Pomodoro borrada exitosamente.", SweetAlertIcon.Success);
+                await swal.FireAsync("Éxito", "Sesión Pomodoro borrada exitosamente.", SweetAlertIcon.Success); //Muestra un mensaje de éxito
                 await OnInitializedAsync(); // Refresca la lista de sesiones
             }
         }

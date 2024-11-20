@@ -1,11 +1,14 @@
 ﻿@page "/recompensas/create"
 @using Pomodoro.Shared.Dtos
-
+@*// Inyección de dependencia para navegación*@
 @inject NavigationManager navigationManager
+@*// Inyección de dependencia para mostrar alertas*@
 @inject SweetAlertService swal
+@*// Inyección de dependencia para realizar llamadas a la API*@
 @inject IRepository repository
 
 @using Microsoft.AspNetCore.Authorization;
+@*// Requiere que el usuario sea un administrador para acceder a esta página*@
 @attribute [Authorize(Roles = "Admin")]
 
 <h3>Crear Nueva Recompensa</h3>
@@ -40,19 +43,21 @@
 </EditForm>
 
 @code {
-    private CrearRecompensaDto nuevaRecompensa = new CrearRecompensaDto();
-    private List<Proyecto> proyectos = new();
-    private int selectedProyectoId;
-
+    private CrearRecompensaDto nuevaRecompensa = new CrearRecompensaDto(); // Objeto para almacenar los datos del formulario
+    private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
+    private int selectedProyectoId; // Id del proyecto seleccionado
+    // Método que se ejecuta cuando el componente se inicializa
     protected override async Task OnInitializedAsync()
     {
+        // Realiza una solicitud para obtener la lista de proyectos disponibles
         var response = await repository.Get<List<Proyecto>>("/api/proyectos");
         if (!response.Error && response.Response is not null)
         {
-            proyectos = response.Response;
+            proyectos = response.Response;  // Asigna la lista de proyectos a la variable
+        
         }
     }
-
+    // Método que se ejecuta al enviar el formulario (cuando los datos son válidos)
     private async Task HandleValidSubmit()
     {
         // Confirmación antes de crear
@@ -65,27 +70,30 @@
                 ConfirmButtonText = "Sí",
                 CancelButtonText = "No"
             });
-
+        // Si el usuario confirma la creación de la recompensa
         if (confirmResult.IsConfirmed)
         {
-            nuevaRecompensa.ProyectoId = selectedProyectoId;
-
+            nuevaRecompensa.ProyectoId = selectedProyectoId; // Asigna el proyecto seleccionado a la recompensa
+            // Realiza una solicitud para crear la recompensa
             var response = await repository.Post("/api/recompensas", nuevaRecompensa);
             if (response.Error)
             {
+                // Si hay un error, muestra un mensaje de error
                 var mensajeError = await response.GetErrorMessage();
                 await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
             else
             {
+                // Si la creación es exitosa, muestra un mensaje de éxito y redirige a la lista de recompensas
                 await swal.FireAsync("Éxito", "La recompensa ha sido creada exitosamente.", SweetAlertIcon.Success);
                 navigationManager.NavigateTo("/recompensas");
             }
         }
     }
-
+    // Método para cancelar la creación de la recompensa y regresar a la lista
     private async Task CancelCreate()
     {
+        // Solicita confirmación antes de cancelar la operación
         var confirmResult = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -95,7 +103,7 @@
                 ConfirmButtonText = "Sí",
                 CancelButtonText = "No"
             });
-
+        // Si el usuario confirma la cancelación, redirige a la lista de recompensas
         if (confirmResult.IsConfirmed)
         {
             navigationManager.NavigateTo("/recompensas");

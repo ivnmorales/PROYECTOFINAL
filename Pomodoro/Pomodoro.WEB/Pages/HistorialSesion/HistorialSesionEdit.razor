@@ -1,11 +1,15 @@
 ﻿@page "/historial-sesiones/edit/{id:int}"
-@using Pomodoro.Shared.Dtos
-
+@* Importa las clases DTO necesarias para trabajar con los datos.*@
+@using Pomodoro.Shared.Dtos 
+@* Inyecta el servicio IRepository para realizar peticiones HTTP a la API. *@
 @inject IRepository repository
+@* Inyecta el servicio SweetAlertService para mostrar alertas y notificaciones al usuario.*@
 @inject SweetAlertService swal
-@inject NavigationManager navigationManager
-
+@*// Inyecta el servicio NavigationManager para manejar la navegación entre páginas.*@
+@inject NavigationManager navigationManager 
+@*Importa funcionalidades de autorización para restringir acceso al componente.*@
 @using Microsoft.AspNetCore.Authorization;
+@*Restringe el acceso a este componente solo a usuarios con el rol "Admin".*@
 @attribute [Authorize(Roles = "Admin")]
 
 <h3>Editar Historial de Sesión</h3>
@@ -29,20 +33,25 @@
 </EditForm>
 
 @code {
+    // Parámetro que recibe el ID del historial de sesión que se va a editar.
     [Parameter] public int Id { get; set; }
+    // Modelo para los datos del historial que se van a editar.
     private ActualizarHistorialSesionDto historialSesion = new ActualizarHistorialSesionDto();
 
     protected async override Task OnInitializedAsync()
     {
+        // Se ejecuta al inicializar el componente.
+        // Obtiene los datos del historial desde la API usando el ID proporcionado.
         var response = await repository.Get<HistorialSesionDto>($"/api/historialSesiones/{Id}");
         if (response.Error)
         {
+            // Si ocurre un error al obtener los datos, muestra un mensaje y redirige al listado.
             var mensajeError = await response.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             navigationManager.NavigateTo("/historialsesiones");
             return;
         }
-
+        // Si los datos se obtienen correctamente, inicializa el modelo con los valores existentes.
         var data = response.Response;
         historialSesion.Fecha = data.Fecha;
         historialSesion.Duracion = data.Duracion;
@@ -50,20 +59,27 @@
 
     private async Task Update()
     {
+
+        // Método para manejar la actualización del historial.
+        // Envía los datos actualizados a la API.
         var response = await repository.Put($"/api/historialSesiones/{Id}", historialSesion);
         if (response.Error)
         {
+            // Si ocurre un error, muestra un mensaje al usuario.
             var mensajeError = await response.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             return;
         }
-
+        // Si la actualización es exitosa, muestra un mensaje y redirige al listado de historiales.
         await swal.FireAsync("Éxito", "El historial de sesión ha sido actualizado.", SweetAlertIcon.Success);
         navigationManager.NavigateTo("/historial-sesiones");
     }
 
     private async Task CancelEdit()
     {
+        // Método para manejar la cancelación de la edición.
+
+        // Muestra una alerta de confirmación al usuario.
         var confirmResult = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -73,7 +89,7 @@
                 ConfirmButtonText = "Sí",
                 CancelButtonText = "No"
             });
-
+        // Si el usuario confirma, redirige al listado de historiales.
         if (confirmResult.IsConfirmed)
         {
             navigationManager.NavigateTo("/historial-sesiones");

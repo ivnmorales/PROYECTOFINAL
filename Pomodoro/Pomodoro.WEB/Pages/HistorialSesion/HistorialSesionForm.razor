@@ -1,7 +1,10 @@
-﻿@using Pomodoro.Shared.Entities
-@using Microsoft.AspNetCore.Components.Forms
-@inject IRepository repository
-@inject SweetAlertService swal
+﻿@using Pomodoro.Shared.Entities @* Importa las entidades compartidas del proyecto.*@
+@using Microsoft.AspNetCore.Components.Forms @*Importa los componentes para formularios y validación en Blazor.*@
+@* Inyecta el repositorio para interactuar con la API.*@
+@inject IRepository repository 
+@*// Inyecta el servicio para mostrar alertas con SweetAlert.*@
+@inject SweetAlertService swal 
+@* Inyecta el servicio para manejar la navegación.*@
 @inject NavigationManager navigationManager
 
 <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
@@ -45,24 +48,26 @@
 </EditForm>
 
 @code {
+    // Define una acción que se ejecutará al cancelar o guardar el formulario.
     [Parameter] public Action ReturnAction { get; set; }
 
-    public HistorialSesion HistorialSesion { get; set; } = new HistorialSesion();
-    private EditContext editContext;
+    public HistorialSesion HistorialSesion { get; set; } = new HistorialSesion(); // Modelo que representa los datos del historial de sesión.
+    private EditContext editContext; // Contexto de edición que gestiona la validación y los cambios del formulario.
 
-    private List<Proyecto> proyectos = new();
-    private List<SesionPomodoro> sesionesPomodoro = new();
+    private List<Proyecto> proyectos = new(); // Lista para almacenar los proyectos obtenidos de la API.
+    private List<SesionPomodoro> sesionesPomodoro = new(); // Lista para almacenar las sesiones Pomodoro obtenidas de la API.
 
     protected override async Task OnInitializedAsync()
     {
+        // Inicializa el contexto de edición con el modelo del formulario.
         editContext = new EditContext(HistorialSesion);
-
+        // Carga la lista de proyectos desde la API
         var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
         if (!proyectosResponse.Error)
         {
             proyectos = proyectosResponse.Response;
         }
-
+        // Carga la lista de sesiones Pomodoro desde la API.
         var sesionesResponse = await repository.Get<List<SesionPomodoro>>("/api/sesionesPomodoro");
         if (!sesionesResponse.Error)
         {
@@ -72,16 +77,19 @@
 
     private async Task HandleValidSubmit()
     {
+        // Envío del formulario al servidor para guardar el historial de sesión.
         var response = await repository.Post("/api/historialSesiones", HistorialSesion);
         if (response.Error)
         {
+            // Si ocurre un error, muestra un mensaje de error con los detalles.
             var mensajeError = await response.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
         }
         else
         {
+            // Si se guarda correctamente, muestra un mensaje de éxito y ejecuta la acción de retorno.
             await swal.FireAsync("Éxito", "Historial de sesión guardado exitosamente.", SweetAlertIcon.Success);
-            ReturnAction?.Invoke();
+            ReturnAction?.Invoke(); // Ejecuta la acción definida como parámetro.
         }
     }
 }
