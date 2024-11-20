@@ -40,48 +40,51 @@
 </EditForm>
 
 @code {
-    [Parameter] public EventCallback OnFormSubmit { get; set; }
-    [Parameter] public Action ReturnAction { get; set; }
+    [Parameter] public EventCallback OnFormSubmit { get; set; } // Evento para manejar el submit del formulario
+    [Parameter] public Action ReturnAction { get; set; } // Acción para gestionar la acción de cancelar
 
-    public CrearTareaDto Tarea { get; set; } = new CrearTareaDto();
-    private EditContext editContext;
-    private bool isSubmitting = false;
+    public CrearTareaDto Tarea { get; set; } = new CrearTareaDto(); // Objeto de la tarea a crear
+    private EditContext editContext; // Contexto de edición para validaciones
+    private bool isSubmitting = false; // Indicador de si el formulario está siendo enviado
 
-    private List<Proyecto> proyectos = new List<Proyecto>();
-    private int? selectedProyectoId;
-
+    private List<Proyecto> proyectos = new List<Proyecto>();  // Lista de proyectos disponibles
+    private int? selectedProyectoId;  // Proyecto seleccionado
+    // Se ejecuta cuando el componente es inicializado
     protected override async Task OnInitializedAsync()
     {
-        editContext = new EditContext(Tarea);
+        editContext = new EditContext(Tarea); // Inicializa el contexto de edición con la tarea
 
+        // Obtiene la lista de proyectos desde la API
         var proyectosResponse = await repository.Get<List<Proyecto>>("api/proyectos");
-        if (!proyectosResponse.Error)
+        if (!proyectosResponse.Error) // Si no hay error en la respuesta
+        
         {
-            proyectos = proyectosResponse.Response;
+            proyectos = proyectosResponse.Response; // Asigna la lista de proyectos
         }
     }
-
+    // Método que se ejecuta cuando el formulario se envía y es válido
     private async Task HandleValidSubmit()
     {
+        // Si ya se está enviando, no se procesa otra solicitu
         if (isSubmitting)
             return;
 
         isSubmitting = true;
 
-        Tarea.ProyectoId = selectedProyectoId;
-
+        Tarea.ProyectoId = selectedProyectoId; // Asigna el proyecto seleccionado a la tarea
+       // Envía los datos de la tarea a la API
         var response = await repository.Post("/api/tareas", Tarea);
 
         if (response.Error)
         {
             var errorMsg = await response.GetErrorMessage();
             await swal.FireAsync("Error", errorMsg, SweetAlertIcon.Error);
-            isSubmitting = false; // Allow retry if there was an error
+            isSubmitting = false; // Permite que se vuelva a enviar el formulario en caso de error
         }
         else
         {
             await swal.FireAsync("Éxito", "Tarea guardada exitosamente.", SweetAlertIcon.Success);
-            await OnFormSubmit.InvokeAsync(); // This should redirect or take any necessary action
+            await OnFormSubmit.InvokeAsync(); // Llama al evento para realizar cualquier acción adicional (ej. redirección)
         }
     }
 }
