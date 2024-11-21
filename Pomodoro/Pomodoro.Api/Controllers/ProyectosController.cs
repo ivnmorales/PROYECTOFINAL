@@ -21,12 +21,9 @@ namespace Pomodoro.API.Controllers
         {
             _context = context;
         }
-<<<<<<< HEAD
 
-        //obtiene la lista de proyectos
-=======
         [AllowAnonymous]
->>>>>>> origin/main
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProyectoDto>>> GetProyectos()
         {
