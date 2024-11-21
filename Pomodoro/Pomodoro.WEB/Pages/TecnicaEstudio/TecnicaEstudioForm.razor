@@ -29,25 +29,27 @@
 </EditForm>
 
 @code {
-    [Parameter] public EventCallback OnFormSubmit { get; set; }
-    [Parameter] public Action ReturnAction { get; set; }
-
+    [Parameter] public EventCallback OnFormSubmit { get; set; }  // Callback para invocar cuando se haya enviado el formulario correctamente
+    [Parameter] public Action ReturnAction { get; set; } // Acción para cancelar la operación y regresar
+    // Objeto que representa el modelo de la técnica de estudio que se va a crear
     public CrearTecnicaEstudioDto TecnicaEstudio { get; set; } = new CrearTecnicaEstudioDto();
-    private EditContext editContext;
-    private bool isSubmitting = false;
-
+    private EditContext editContext; // Contexto de edición para la validación del formulario
+    private bool isSubmitting = false; // Bandera para evitar múltiples envíos del formulario
+   // Se ejecuta cuando la página se inicializa
     protected override async Task OnInitializedAsync()
     {
+        // Inicializa el contexto de edición del formulario utilizando el modelo `TecnicaEstudio`
         editContext = new EditContext(TecnicaEstudio);
     }
-
+    // Método que se ejecuta cuando el formulario es enviado y validado correctamente
     private async Task HandleValidSubmit()
     {
+    // Verifica si el formulario ya está siendo enviado para evitar envíos duplicados
         if (isSubmitting)
             return;
 
-        isSubmitting = true;
-
+        isSubmitting = true; // Establece la bandera de envío
+        // Realiza una solicitud POST a la API para guardar la nueva técnica de estudio
         var response = await repository.Post("/api/tecnicas-estudio", TecnicaEstudio);
 
         if (response.Error)

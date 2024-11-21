@@ -52,62 +52,70 @@
     </div>
 
     <button type="submit" class="btn btn-primary" disabled="@isSubmitting">Guardar</button>
-    <button type="button" class="btn btn-secondary" @onclick="ReturnAction">Cancelar</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
 </EditForm>
 
 @code {
-    [Parameter] public EventCallback OnFormSubmit { get; set; }
-    [Parameter] public Action ReturnAction { get; set; }
-
+    [Parameter] public EventCallback OnFormSubmit { get; set; } //Evento que se ejecutará al enviar el formulario
+   // Objeto que contiene los datos de la nueva sesión Pomodoro
     public CrearSesionPomodoroDto Sesion { get; set; } = new CrearSesionPomodoroDto();
-    private EditContext editContext;
-    private bool isSubmitting = false;
-
+    private EditContext editContext; //Contexto del formulario, usado para validación y seguimiento del estado
+    private bool isSubmitting = false; //Indica si el formulario está siendo enviado
+   // Listas para almacenar los proyectos y tareas obtenidos desde la API
     private List<Proyecto> proyectos = new List<Proyecto>();
     private List<Tarea> tareas = new List<Tarea>();
 
-    private int? selectedProyectoId;
-    private int? selectedTareaId;
-
+    private int? selectedProyectoId; //ID del proyecto seleccionado
+    private int? selectedTareaId; //ID de la tarea seleccionada
+   // Método que se ejecuta al inicializar el componente
     protected override async Task OnInitializedAsync()
     {
-        editContext = new EditContext(Sesion);
-
+        editContext = new EditContext(Sesion); //Inicializa el contexto de edición para el formulario
+        // Obtiene la lista de proyectos desde la API
         var proyectosResponse = await repository.Get<List<Proyecto>>("api/proyectos");
         if (!proyectosResponse.Error)
         {
-            proyectos = proyectosResponse.Response;
+            proyectos = proyectosResponse.Response; //Asigna los proyectos a la lista si la respuesta es válida
         }
-
+        // Obtiene la lista de tareas desde la API
         var tareasResponse = await repository.Get<List<Tarea>>("api/tareas");
         if (!tareasResponse.Error)
         {
-            tareas = tareasResponse.Response;
+            tareas = tareasResponse.Response; //Asigna las tareas a la lista si la respuesta es válida
         }
     }
-
+    // Método que se ejecuta cuando se envía el formulario de manera válida
     private async Task HandleValidSubmit()
     {
-        if (isSubmitting)
+        if (isSubmitting) //Si ya se está enviando el formulario, no hacer nada
             return;
 
         isSubmitting = true;
-
+        // Asigna los IDs de proyecto y tarea seleccionados al objeto de sesión
         Sesion.ProyectoId = selectedProyectoId;
         Sesion.TareaId = selectedTareaId;
-
+        // Enviar los datos del formulario a la API para guardar la nueva sesión Pomodoro
         var response = await repository.Post("/api/sesionesPomodoro", Sesion);
 
-        if (response.Error)
+        if (response.Error) //Si hubo un error al guardar
         {
             var errorMsg = await response.GetErrorMessage();
             await swal.FireAsync("Error", errorMsg, SweetAlertIcon.Error);
-            isSubmitting = false; // Allow retry if there was an error
+            isSubmitting = false; //Permite que el usuario intente nuevamente
         }
         else
         {
             await swal.FireAsync("Éxito", "Sesión Pomodoro guardada exitosamente.", SweetAlertIcon.Success);
-            await OnFormSubmit.InvokeAsync(); // This should redirect or take any necessary action
+            await OnFormSubmit.InvokeAsync();// llama al evento de formulario enviado para ejecutar cualquier acción adicional
         }
+    }
+
+    private async Task Cancel()
+    {
+        // Muestra ventana emergente al cancelar
+        await swal.FireAsync("Operación Cancelada", "No se guardaron cambios.", SweetAlertIcon.Warning);
+
+        // Redirige a la lista de sesiones Pomodoro después de la alerta
+        navigationManager.NavigateTo("/sesionesPomodoro");
     }
 }

@@ -1,0 +1,140 @@
+﻿@page "/recompensas"
+@using Pomodoro.Shared.Dtos
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization;
+@*// Requiere autenticación con rol de "Admin"*@
+@attribute [Authorize(Roles = "Admin")]
+
+<h3>Lista de Recompensas</h3>
+
+@if (recompensas == null)
+{
+    <div class="spinner" />
+}
+else
+{
+    <GenericList MyList="recompensas">
+        <Body>
+            <div class="card">
+                <div class="card-header">
+                    <span>
+                        <i class="oi oi-trophy"></i> Recompensas
+                        <a class="btn btn-sm btn-success float-end" href="/recompensas/create">
+                            <i class="oi oi-plus"></i> Nueva Recompensa
+                        </a>
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Proyecto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (recompensas.Any())
+                            {
+                                @foreach (var recompensa in recompensas)
+                                {
+                                    <tr>
+                                        <td>@recompensa.Nombre</td>
+                                        <td>@recompensa.Descripcion</td>
+                                        <td>@(recompensa.ProyectoId != null ? proyectos.FirstOrDefault(p => p.Id == recompensa.ProyectoId)?.Nombre : "N/A")</td>
+                                        <td>
+                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditRecompensa(recompensa.Id))">
+                                                <i class="oi oi-pencil"></i> Editar
+                                            </a>
+                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteRecompensa(recompensa.Id))">
+                                                <i class="oi oi-trash"></i> Borrar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay recompensas disponibles.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </Body>
+    </GenericList>
+}
+
+@code {
+    public List<RecompensaDto>? recompensas { get; set; }  // Lista de recompensas a mostrar
+    private List<Proyecto> proyectos = new(); // Lista de proyectos para asociar a las recompensas
+   // Método que se ejecuta cuando el componente se inicializa
+    protected async override Task OnInitializedAsync()
+    {
+        // Realiza una solicitud GET para obtener las recompensas
+        var responseHttp = await repository.Get<List<RecompensaDto>>("/api/recompensas");
+
+        if (responseHttp.Error)
+        {
+            // Si hay un error, muestra un mensaje de error
+            var mensajeError = await responseHttp.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+        }
+        else
+        {
+            recompensas = responseHttp.Response!; // Asigna las recompensas obtenidas
+
+            // Cargar los proyectos completos si aún no están cargados
+            var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+            if (!proyectosResponse.Error)
+            {
+                proyectos = proyectosResponse.Response;
+            }
+        }
+    }
+    // Método para redirigir al usuario a la página de edición de la recompensa
+    private void EditRecompensa(int id)
+    {
+        NavigationManager.NavigateTo($"/recompensas/edit/{id}");
+    }
+    // Método para eliminar una recompensa
+    private async Task DeleteRecompensa(int id)
+    {
+        // Muestra una alerta de confirmación antes de eliminar
+        var respuesta = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea borrar esta recompensa?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, borrar",
+                CancelButtonText = "No, cancelar"
+            });
+        // Si el usuario confirma, realiza la solicitud DELETE
+        if (respuesta.IsConfirmed)
+        {
+            var response = await repository.Delete($"/api/recompensas/{id}");
+
+            if (response.Error)
+            {
+                // Si hay un error, muestra un mensaje de error
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                // Si la recompensa fue eliminada con éxito, muestra un mensaje de éxito y recarga la lista
+                await swal.FireAsync("Éxito", "Recompensa borrada exitosamente.", SweetAlertIcon.Success);
+                await OnInitializedAsync(); // Refresca la lista de recompensas
+            }
+        }
+    }
+}

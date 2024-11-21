@@ -1,39 +1,74 @@
 ﻿@page "/proyectos/create"
-
+@*// Importa los DTOs utilizados en la creación de proyectos.*@
+@using Pomodoro.Shared.Dtos
+@*// Inyecta el servicio para manejar la navegación.*@
 @inject NavigationManager navigationManager
+@*// Inyecta el repositorio para interactuar con la API.*@
 @inject IRepository repository
+@*// Inyecta el servicio para mostrar alertas con SweetAlert.*@
 @inject SweetAlertService swal
+
+@using Microsoft.AspNetCore.Authorization;
+@* // Restringe el acceso a esta página a usuarios con el rol "Admin".*@
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>Crear Nuevo Proyecto</h3>
 
-<ProyectoForm @ref="proyectoForm" OnFormSubmit="Create" ReturnAction="Return" />
+<EditForm Model="nuevoProyecto" OnValidSubmit="Create">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre del Proyecto</label>
+        <InputText id="nombre" class="form-control" @bind-Value="nuevoProyecto.Nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción del Proyecto</label>
+        <InputTextArea id="descripcion" class="form-control" @bind-Value="nuevoProyecto.Descripcion" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear Proyecto</button>
+    <button type="button" class="btn btn-secondary" @onclick="CancelCreate">Cancelar</button>
+</EditForm>
 
 @code {
-    private ProyectoForm proyectoForm; // Referencia al componente del formulario
+    private CrearProyectoDto nuevoProyecto = new CrearProyectoDto();
+    // Modelo para contener los datos del nuevo proyecto.
 
     private async Task Create()
     {
-        // Envía la solicitud POST para crear el nuevo proyecto
-        var responseHTTP = await repository.Post("api/proyectos", proyectoForm.Proyecto);
-
-        // Verifica si hay un error
-        if (responseHTTP.Error)
+        // Enviar la solicitud POST para crear el nuevo proyecto
+        var response = await repository.Post("/api/proyectos", nuevoProyecto);
+        if (response.Error)
         {
-            // Muestra un mensaje de error
-            var mensajeError = await responseHTTP.GetErrorMessage();
+            var mensajeError = await response.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            return;
         }
-        else
-        {
-            // Si la creación es exitosa, muestra el mensaje de éxito y redirige
-            await swal.FireAsync("Éxito", "Proyecto creado exitosamente.", SweetAlertIcon.Success);
-            navigationManager.NavigateTo("/proyectos"); // Redirige a la lista de proyectos
-        }
+
+        // Muestra el mensaje de éxito y redirige a la lista de proyectos
+        await swal.FireAsync("Éxito", "Proyecto creado exitosamente.", SweetAlertIcon.Success);
+        navigationManager.NavigateTo("/proyectos");
     }
 
-    private void Return()
+    private async Task CancelCreate()
     {
-        // Redirige a la lista de proyectos sin guardar
-        navigationManager.NavigateTo("/proyectos");
+        // Muestra la alerta de confirmación de cancelación
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea cancelar la operación?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+
+        if (confirmResult.IsConfirmed)
+        {
+            // Si el usuario confirma, redirige a la lista de proyectos
+            navigationManager.NavigateTo("/proyectos");
+        }
     }
 }

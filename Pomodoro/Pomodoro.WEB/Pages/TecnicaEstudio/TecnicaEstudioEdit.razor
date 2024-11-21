@@ -1,9 +1,13 @@
-﻿@page "/tecnica-estudio/edit/{id:int}"
+﻿@page "/tecnicas-estudio/edit/{id:int}"
 @using Pomodoro.Shared.Entities
 @using Pomodoro.WEB.Repositories
 @inject IRepository repository
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization;
+@*// Restringe el acceso a esta página solo para usuarios con el rol "Admin"*@
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>Editar Técnica de Estudio</h3>
 
@@ -27,11 +31,14 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+
+    <!-- Cancel Button -->
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
 </EditForm>
 
 @code {
     [Parameter] public int Id { get; set; } // ID de la técnica de estudio a editar
-    private TecnicaEstudio tecnicaEstudio { get; set; } = new TecnicaEstudio();
+    private TecnicaEstudio tecnicaEstudio { get; set; } = new TecnicaEstudio(); // Objeto que representa la técnica de estudio a editar
 
     protected async override Task OnInitializedAsync()
     {
@@ -46,10 +53,9 @@
         }
         tecnicaEstudio = response.Response;
     }
-
+    // Método para manejar el envío del formulario cuando es válido
     private async Task HandleValidSubmit()
     {
-        // Enviar a la API para actualizar la técnica de estudio
         var response = await repository.Put($"/api/tecnicas-estudio/{Id}", tecnicaEstudio);
         if (response.Error)
         {
@@ -60,6 +66,25 @@
         {
             await swal.FireAsync("Éxito", "La técnica de estudio ha sido editada.", SweetAlertIcon.Success);
             NavigationManager.NavigateTo("/tecnicas-estudio");
+        }
+    }
+
+    // Método para cancelar la operación y volver a la lista de técnicas de estudio
+    private async Task Cancel()
+    {
+        var result = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "¿Estás seguro?",
+                Text = "Si cancelas, se perderán los cambios no guardados.",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, cancelar",
+                CancelButtonText = "No, volver"
+            });
+
+        if (result.IsConfirmed)  // Si el usuario confirma la cancelación
+        {
+            NavigationManager.NavigateTo("/tecnicas-estudio"); // Redirige a la lista de técnicas de estudio
         }
     }
 }

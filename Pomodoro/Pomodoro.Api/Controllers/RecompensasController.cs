@@ -19,7 +19,7 @@ namespace Pomodoro.API.Controllers
         {
             _context = context;
         }
-
+     
         // Obtiene todas las recompensas
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RecompensaDto>>> GetRecompensas()

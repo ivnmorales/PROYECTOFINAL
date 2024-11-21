@@ -5,74 +5,99 @@
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
 
+@using Microsoft.AspNetCore.Authorization;
+@*Restringe el acceso a este componente solo a usuarios con el rol de "Admin"*@
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Lista de Sesiones Pomodoro</h3>
 
-<div class="mb-3">
-    <a class="btn btn-warning" href="/sesionesPomodoro/create">Nueva Sesión</a>
-</div>
+@if (sesionesPomodoro == null)
+{
+    <div class="spinner" />
+}
+else
+{
+    <GenericList MyList="sesionesPomodoro">
+        <Body>
+            <div class="card">
+                <div class="card-header">
+                    <span>
+                        <i class="oi oi-clock"></i> Sesiones Pomodoro
+                        <a class="btn btn-sm btn-success float-end" href="/sesionesPomodoro/create">
+                            <i class="oi oi-plus"></i> Nueva Sesión
+                        </a>
+                    </span>
+                </div>
 
-<GenericList MyList="sesionesPomodoro">
-    <Body>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Duración (min)</th>
-                    <th>Fecha de Inicio</th>
-                    <th>Fecha de Fin</th>
-                    <th>Estado</th>
-                    <th>Proyecto</th>
-                    <th>Tarea</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (sesionesPomodoro != null && sesionesPomodoro.Any())
-                {
-                    @foreach (var sesion in sesionesPomodoro)
-                    {
-                        <tr>
-                            <td>@sesion.Duracion</td>
-                            <td>@sesion.FechaInicio.ToShortDateString()</td>
-                            <td>@sesion.FechaFin.ToShortDateString()</td>
-                            <td>@sesion.Estado</td>
-                            <td>@(sesion.ProyectoId != null ? proyectos.FirstOrDefault(p => p.Id == sesion.ProyectoId)?.Nombre : "N/A")</td>
-                            <td>@(sesion.TareaId != null ? tareas.FirstOrDefault(t => t.Id == sesion.TareaId)?.Titulo : "N/A")</td>
-                            <td>
-                                <a class="btn btn-secondary" @onclick="@(() => EditSesionPomodoro(sesion.Id))">Editar</a>
-                                <button class="btn btn-danger" @onclick="@(() => DeleteSesionPomodoro(sesion.Id))">Borrar</button>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="7" class="text-center">No hay sesiones Pomodoro disponibles.</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </Body>
-</GenericList>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Duración (min)</th>
+                                <th>Fecha de Inicio</th>
+                                <th>Fecha de Fin</th>
+                                <th>Estado</th>
+                                <th>Proyecto</th>
+                                <th>Tarea</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (sesionesPomodoro.Any())
+                            {
+                                @foreach (var sesion in sesionesPomodoro)
+                                {
+                                    <tr>
+                                        <td>@sesion.Duracion</td>
+                                        <td>@sesion.FechaInicio.ToShortDateString()</td>
+                                        <td>@sesion.FechaFin.ToShortDateString()</td>
+                                        <td>@sesion.Estado</td>
+                                        <td>@(sesion.ProyectoId != null ? proyectos.FirstOrDefault(p => p.Id == sesion.ProyectoId)?.Nombre : "N/A")</td>
+                                        <td>@(sesion.TareaId != null ? tareas.FirstOrDefault(t => t.Id == sesion.TareaId)?.Titulo : "N/A")</td>
+                                        <td>
+                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditSesionPomodoro(sesion.Id))">
+                                                <i class="oi oi-pencil"></i> Editar
+                                            </a>
+                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteSesionPomodoro(sesion.Id))">
+                                                <i class="oi oi-trash"></i> Borrar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center">No hay sesiones Pomodoro disponibles.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </Body>
+    </GenericList>
+}
 
 @code {
+    // Lista de sesiones Pomodoro que se cargará desde la API
     public List<SesionPomodoroDto>? sesionesPomodoro { get; set; }
     private List<Proyecto> proyectos = new();
     private List<Tarea> tareas = new();
-
-    // Método que se ejecuta al inicializar la página
+    // Método que se ejecuta cuando el componente se inicializa
     protected async override Task OnInitializedAsync()
     {
+        // Realiza una solicitud GET para obtener las sesiones Pomodoro desde la API
         var responseHttp = await repository.Get<List<SesionPomodoroDto>>("/api/sesionesPomodoro");
 
-        if (responseHttp.Error)
+        if (responseHttp.Error) //Si la respuesta tiene un error, muestra un mensaje
         {
-            var mensajeError = await responseHttp.GetErrorMessage();
-            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            var mensajeError = await responseHttp.GetErrorMessage(); //Obtiene el mensaje de error
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error); //Muestra la alerta de error
         }
         else
         {
-            sesionesPomodoro = responseHttp.Response!;
+            sesionesPomodoro = responseHttp.Response!; //Asigna las sesiones obtenidas a la propiedad sesionesPomodoro
 
             // Cargar los proyectos y tareas completos si aún no están cargados
             var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
@@ -88,16 +113,15 @@
             }
         }
     }
-
-    // Método para navegar a la página de edición de una sesión Pomodoro
+    // Método para redirigir a la página de edición de una sesión Pomodoro
     private void EditSesionPomodoro(int id)
     {
-        NavigationManager.NavigateTo($"/sesion-pomodoro/edit/{id}");
+        NavigationManager.NavigateTo($"/sesionesPomodoro/edit/{id}"); //Redirige al componente de edición pasando el ID de la sesión
     }
-
-    // Método para borrar una sesión Pomodoro
+    // Método para eliminar una sesión Pomodoro
     private async Task DeleteSesionPomodoro(int id)
     {
+        // Muestra una alerta de confirmación antes de proceder con la eliminación
         var respuesta = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -108,18 +132,19 @@
                 CancelButtonText = "No, cancelar"
             });
 
-        if (respuesta.IsConfirmed)
+        if (respuesta.IsConfirmed) //Si el usuario confirma la eliminación
         {
+            // Realiza una solicitud DELETE para eliminar la sesión
             var response = await repository.Delete($"/api/sesionesPomodoro/{id}");
 
-            if (response.Error)
+            if (response.Error) //Si hubo un error durante la eliminación
             {
                 var mensajeError = await response.GetErrorMessage();
                 await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
             else
             {
-                await swal.FireAsync("Éxito", "Sesión Pomodoro borrada exitosamente.", SweetAlertIcon.Success);
+                await swal.FireAsync("Éxito", "Sesión Pomodoro borrada exitosamente.", SweetAlertIcon.Success); //Muestra un mensaje de éxito
                 await OnInitializedAsync(); // Refresca la lista de sesiones
             }
         }

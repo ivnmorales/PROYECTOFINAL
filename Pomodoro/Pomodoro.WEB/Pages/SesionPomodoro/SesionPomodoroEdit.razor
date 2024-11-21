@@ -1,13 +1,17 @@
-﻿@page "/sesion-pomodoro/edit/{id:int}"
+﻿@page "/sesionesPomodoro/edit/{id:int}"
 @using Pomodoro.Shared.Entities
 @using Pomodoro.WEB.Repositories
 @inject IRepository repository
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
 
-<h3>Editar Sesión Pomodoro</h3>
+@using Microsoft.AspNetCore.Authorization;
+@*//Solo los usuarios con rol de "Admin" pueden acceder a esta página*@ 
+@attribute [Authorize(Roles = "Admin")] 
 
-@if (SesionPomodoro != null)
+<h3>Editar Sesión Pomodoro</h3>
+@*Si la sesión Pomodoro fue cargada correctamente*@
+@if (SesionPomodoro != null) 
 {
     <EditForm Model="@SesionPomodoro" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
@@ -33,35 +37,8 @@
             <InputText id="estado" class="form-control" @bind-Value="SesionPomodoro.Estado" />
         </div>
 
-        @if (proyectos?.Any() == true)
-        {
-            <div class="mb-3">
-                <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
-                <select id="proyecto" class="form-control" @bind="selectedProyectoId" required>
-                    <option value="">Seleccione un proyecto</option>
-                    @foreach (var proyecto in proyectos)
-                    {
-                        <option value="@proyecto.Id" selected="@proyecto.Id == SesionPomodoro.ProyectoId">@proyecto.Nombre</option>
-                    }
-                </select>
-            </div>
-        }
-
-        @if (tareas?.Any() == true)
-        {
-            <div class="mb-3">
-                <label for="tarea" class="form-label">Seleccionar Tarea</label>
-                <select id="tarea" class="form-control" @bind="selectedTareaId" required>
-                    <option value="">Seleccione una tarea</option>
-                    @foreach (var tarea in tareas)
-                    {
-                        <option value="@tarea.Id" selected="@tarea.Id == SesionPomodoro.TareaId">@tarea.Titulo</option>
-                    }
-                </select>
-            </div>
-        }
-
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
     </EditForm>
 }
 else
@@ -70,12 +47,12 @@ else
 }
 
 @code {
-    [Parameter] public int Id { get; set; }
-    private SesionPomodoro? SesionPomodoro { get; set; }
+    [Parameter] public int Id { get; set; } //Parámetro para recibir el ID de la sesión Pomodoro a editar
+    private SesionPomodoro? SesionPomodoro { get; set; } // Objeto que almacenará la sesión Pomodoro a editar
     private List<Proyecto> proyectos = new(); // Inicializado como lista vacía
     private List<Tarea> tareas = new();       // Inicializado como lista vacía
-    private int selectedProyectoId;
-    private int selectedTareaId;
+    private int selectedProyectoId; //Variable para almacenar el ID del proyecto seleccionado
+    private int selectedTareaId; //Variable para almacenar el ID de la tarea seleccionada
 
     protected async override Task OnInitializedAsync()
     {
@@ -132,5 +109,12 @@ else
             await swal.FireAsync("Éxito", "La sesión Pomodoro ha sido editada.", SweetAlertIcon.Success);
             NavigationManager.NavigateTo("/sesiones-pomodoro");
         }
+    }
+
+    private void Cancel()
+    {
+        // Muestra ventana emergente al cancelar
+        swal.FireAsync("Operación Cancelada", "No se realizaron cambios.", SweetAlertIcon.Warning);
+        NavigationManager.NavigateTo("/sesionesPomodoro");
     }
 }

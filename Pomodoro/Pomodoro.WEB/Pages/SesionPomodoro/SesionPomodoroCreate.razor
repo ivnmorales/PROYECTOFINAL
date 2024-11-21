@@ -3,6 +3,9 @@
 @inject NavigationManager navigationManager
 @inject SweetAlertService swal
 
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Admin")]
+
 <h3>Crear Nueva Sesión Pomodoro</h3>
 
 <SesionPomodoroForm @ref="sesionPomodoroForm" OnFormSubmit="Return" />
@@ -13,6 +16,15 @@
     private void Return()
     {
         // Redirige a la lista de sesiones Pomodoro
+        navigationManager.NavigateTo("/sesionesPomodoro");
+    }
+
+    private async Task Cancel()
+    {
+        // Muestra ventana emergente al cancelar
+        await swal.FireAsync("Operación Cancelada", "No se guardaron cambios.", SweetAlertIcon.Warning);
+
+        // Redirige a la lista de sesiones Pomodoro después de la alerta
         navigationManager.NavigateTo("/sesionesPomodoro");
     }
 }

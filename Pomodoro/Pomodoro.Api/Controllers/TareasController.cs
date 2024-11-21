@@ -19,7 +19,11 @@ namespace Pomodoro.API.Controllers
         {
             _context = context;
         }
+<<<<<<< HEAD
         //obtiene las tareas 
+=======
+        
+>>>>>>> origin/main
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TareaDto>>> GetTareas()
         {//consulta las tareas y las proyecta a DTOs

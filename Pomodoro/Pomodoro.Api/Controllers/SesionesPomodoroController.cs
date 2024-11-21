@@ -19,7 +19,7 @@ namespace Pomodoro.API.Controllers
         {
             _context = context;
         }
-
+      
         // Obtiene todas las sesiones Pomodoro
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SesionPomodoroDto>>> GetSesionesPomodoro()

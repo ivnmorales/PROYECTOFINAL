@@ -5,78 +5,101 @@
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
 
+@using Microsoft.AspNetCore.Authorization;
+@*// Solo permite acceder a esta página si el usuario tiene el rol "Admin"*@
+@attribute [Authorize(Roles = "Admin")] 
+
 <h3>Lista de Técnicas de Estudio</h3>
 
-<div class="mb-3">
-    <a class="btn btn-warning" href="/tecnicas-estudio/create">Nueva Técnica de Estudio</a>
-</div>
+@if (tecnicasEstudio == null)
+{
+    <div class="spinner" />
+}
+else
+{
+    <GenericList MyList="tecnicasEstudio">
+        <Body>
+            <div class="card">
+                <div class="card-header">
+                    <span>
+                        <i class="oi oi-book"></i> Técnicas de Estudio
+                        <a class="btn btn-sm btn-success float-end" href="/tecnicas-estudio/create">
+                            <i class="oi oi-plus"></i> Nueva Técnica de Estudio
+                        </a>
+                    </span>
+                </div>
 
-<GenericList MyList="tecnicasEstudio">
-    <Body>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Beneficios</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (tecnicasEstudio != null && tecnicasEstudio.Any())
-                {
-                    @foreach (var tecnica in tecnicasEstudio)
-                    {
-                        <tr>
-                            <td>@tecnica.Nombre</td>
-                            <td>@tecnica.Descripcion</td>
-                            <td>@(string.IsNullOrEmpty(tecnica.Beneficios) ? "N/A" : tecnica.Beneficios)</td>
-                            <td>
-                                <a class="btn btn-secondary" @onclick="@(() => EditTecnicaEstudio(tecnica.Id))">Editar</a>
-                                <button class="btn btn-danger" @onclick="@(() => DeleteTecnicaEstudio(tecnica.Id))">Borrar</button>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="4" class="text-center">No hay técnicas de estudio disponibles.</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </Body>
-</GenericList>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Beneficios</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (tecnicasEstudio.Any())
+                            {
+                                @foreach (var tecnica in tecnicasEstudio)
+                                {
+                                    <tr>
+                                        <td>@tecnica.Nombre</td>
+                                        <td>@tecnica.Descripcion</td>
+                                        <td>@(string.IsNullOrEmpty(tecnica.Beneficios) ? "N/A" : tecnica.Beneficios)</td>
+                                        <td>
+                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditTecnicaEstudio(tecnica.Id))">
+                                                <i class="oi oi-pencil"></i> Editar
+                                            </a>
+                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteTecnicaEstudio(tecnica.Id))">
+                                                <i class="oi oi-trash"></i> Borrar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay técnicas de estudio disponibles.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </Body>
+    </GenericList>
+}
 
 @code {
-    public List<TecnicaEstudioDto>? tecnicasEstudio { get; set; }
-
-    // Método que se ejecuta al inicializar la página
+    public List<TecnicaEstudioDto>? tecnicasEstudio { get; set; } // Lista de técnicas de estudio que se va a mostrar
+    // Método que se ejecuta cuando el componente se inicializa
     protected async override Task OnInitializedAsync()
     {
+        // Hace una solicitud GET para obtener la lista de técnicas de estudio desde la API
         var responseHttp = await repository.Get<List<TecnicaEstudioDto>>("/api/tecnicas-estudio");
 
-        if (responseHttp.Error)
+        if (responseHttp.Error) // Si ocurre un error en la respuesta
         {
-            var mensajeError = await responseHttp.GetErrorMessage();
+            var mensajeError = await responseHttp.GetErrorMessage(); // Obtiene el mensaje de error
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
         }
-        else
+        else // Si la solicitud es exitosa
         {
-            tecnicasEstudio = responseHttp.Response!;
+            tecnicasEstudio = responseHttp.Response!; // Asigna la lista de técnicas de estudio
         }
     }
-
-    // Método para navegar a la página de edición de una técnica de estudio
+    // Método para redirigir a la página de edición de la técnica seleccionada
     private void EditTecnicaEstudio(int id)
     {
-        NavigationManager.NavigateTo($"/tecnica-estudio/edit/{id}");
+        NavigationManager.NavigateTo($"/tecnicas-estudio/edit/{id}");   // Navega a la página de edición
     }
-
-    // Método para borrar una técnica de estudio
+    // Método para eliminar una técnica de estudio
     private async Task DeleteTecnicaEstudio(int id)
     {
+        // Muestra una alerta de confirmación antes de borrar la técnica
         var respuesta = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -87,19 +110,20 @@
                 CancelButtonText = "No, cancelar"
             });
 
-        if (respuesta.IsConfirmed)
+        if (respuesta.IsConfirmed)  // Si el usuario confirma la acción
         {
+            // Hace una solicitud DELETE para borrar la técnica de estudio
             var response = await repository.Delete($"/api/tecnicas-estudio/{id}");
 
-            if (response.Error)
+            if (response.Error) // Si hay un error en la solicitud DELETE
             {
                 var mensajeError = await response.GetErrorMessage();
                 await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
-            else
+            else // Si la técnica de estudio fue borrada con éxito
             {
-                await swal.FireAsync("Éxito", "Técnica de estudio borrada exitosamente.", SweetAlertIcon.Success);
-                await OnInitializedAsync(); // Refresca la lista de técnicas de estudio
+                await swal.FireAsync("Éxito", "Técnica de estudio borrada exitosamente.", SweetAlertIcon.Success); // Muestra un mensaje de éxito
+                await OnInitializedAsync();  // Vuelve a cargar la lista de técnicas de estudio
             }
         }
     }

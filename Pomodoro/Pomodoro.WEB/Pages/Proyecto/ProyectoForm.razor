@@ -67,49 +67,49 @@
 </EditForm>
 
 @code {
-    [Parameter] public EventCallback OnFormSubmit { get; set; }
-    [Parameter] public Action ReturnAction { get; set; }
+    [Parameter] public EventCallback OnFormSubmit { get; set; } // Evento para notificar al componente padre cuando se guarde el proyecto
+    [Parameter] public Action ReturnAction { get; set; } // Acción para cancelar y volver a la página anterior
 
-    public Proyecto Proyecto { get; set; } = new Proyecto();
-    private EditContext editContext;
-    private bool isSubmitting = false;  // Variable de control
+    public Proyecto Proyecto { get; set; } = new Proyecto();  // Objeto Proyecto que se vincula al formulario
+    private EditContext editContext; // Contexto de edición para gestionar validaciones
+    private bool isSubmitting = false;  // Variable para evitar múltiples envíos simultáneos
 
-    private List<Tarea> tareas = new List<Tarea>();
-    private List<SesionPomodoro> sesionesPomodoro = new List<SesionPomodoro>();
-    private List<Recompensa> recompensas = new List<Recompensa>();
-    private List<HistorialSesion> historialSesiones = new List<HistorialSesion>();
+    private List<Tarea> tareas = new List<Tarea>(); // Lista de tareas disponibles
+    private List<SesionPomodoro> sesionesPomodoro = new List<SesionPomodoro>(); // Lista de sesiones Pomodoro disponibles
+    private List<Recompensa> recompensas = new List<Recompensa>(); // Lista de recompensas disponibles
+    private List<HistorialSesion> historialSesiones = new List<HistorialSesion>(); // Lista de historiales de sesiones disponibles
 
-    private int? selectedTareaId;
-    private int? selectedSesionPomodoroId;
-    private int? selectedRecompensaId;
-    private int? selectedHistorialSesionId;
-
+    private int? selectedTareaId; // ID de la tarea seleccionada
+    private int? selectedSesionPomodoroId;  // ID de la sesión Pomodoro seleccionada
+    private int? selectedRecompensaId; // ID de la recompensa seleccionada
+    private int? selectedHistorialSesionId; // ID del historial de sesión seleccionado
+   // Método que se ejecuta al inicializar el componente
     protected override async Task OnInitializedAsync()
     {
-        editContext = new EditContext(Proyecto);
-
+        editContext = new EditContext(Proyecto); // Configurar el contexto de edición
+        // Cargar las listas desde el repositorio (API)
         var tareasResponse = await repository.Get<List<Tarea>>("api/tareas");
         if (!tareasResponse.Error)
         {
-            tareas = tareasResponse.Response;
+            tareas = tareasResponse.Response; // Asignar las tareas si la solicitud fue exitosa
         }
 
         var sesionesResponse = await repository.Get<List<SesionPomodoro>>("api/sesionesPomodoro");
         if (!sesionesResponse.Error)
         {
-            sesionesPomodoro = sesionesResponse.Response;
+            sesionesPomodoro = sesionesResponse.Response;  // Asignar las sesiones si la solicitud fue exitosa
         }
 
         var recompensasResponse = await repository.Get<List<Recompensa>>("api/recompensas");
         if (!recompensasResponse.Error)
         {
-            recompensas = recompensasResponse.Response;
+            recompensas = recompensasResponse.Response; // Asignar las recompensas si la solicitud fue exitosa
         }
 
         var historialSesionesResponse = await repository.Get<List<HistorialSesion>>("api/historialSesiones");
         if (!historialSesionesResponse.Error)
         {
-            historialSesiones = historialSesionesResponse.Response;
+            historialSesiones = historialSesionesResponse.Response; // Asignar los historiales si la solicitud fue exitosa
         }
     }
 

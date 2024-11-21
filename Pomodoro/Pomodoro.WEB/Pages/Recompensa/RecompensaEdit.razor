@@ -1,0 +1,138 @@
+﻿@page "/recompensas/edit/{id:int}"
+@using Pomodoro.Shared.Entities
+@using Pomodoro.WEB.Repositories
+@inject IRepository repository
+@inject SweetAlertService swal
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Authorization;
+@*// Requiere que el usuario sea un administrador para acceder a esta página*@
+@attribute [Authorize(Roles = "Admin")] 
+
+<h3>Editar Recompensa</h3>
+
+@if (Recompensa != null)
+{
+    <EditForm Model="@Recompensa" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <InputText id="nombre" class="form-control" @bind-Value="Recompensa.Nombre" />
+        </div>
+
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <InputTextArea id="descripcion" class="form-control" @bind-Value="Recompensa.Descripcion" />
+        </div>
+
+        @if (proyectos?.Any() == true)
+        {
+            <div class="mb-3">
+                <label for="proyecto" class="form-label">Seleccionar Proyecto</label>
+                <select id="proyecto" class="form-control" @bind="selectedProyectoId" required>
+                    <option value="">Seleccione un proyecto</option>
+                    @foreach (var proyecto in proyectos)
+                    {
+                        <option value="@proyecto.Id" selected="@proyecto.Id == Recompensa.ProyectoId">@proyecto.Nombre</option>
+                    }
+                </select>
+            </div>
+        }
+
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancelar</button>
+    </EditForm>
+}
+else
+{
+    <p>Cargando...</p>
+}
+
+@code {
+    [Parameter] public int Id { get; set; } // Recibe el ID de la recompensa desde la URL
+    private Recompensa? Recompensa { get; set; }  // Objeto que almacena los datos de la recompensa a editar
+    private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
+    private int selectedProyectoId; // ID del proyecto seleccionado
+
+    // Método que se ejecuta cuando el componente se inicializa
+    protected async override Task OnInitializedAsync()
+    {
+        // Realiza una solicitud para obtener la recompensa que se va a editar
+        var response = await repository.Get<Recompensa>($"/api/recompensas/{Id}");
+        if (response.Error)
+        {
+            // Si hay un error, muestra un mensaje de error y redirige a la lista de recompensas
+            var mensajeError = await response.GetErrorMessage();
+            await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            NavigationManager.NavigateTo("/recompensas");
+            return;
+        }
+        Recompensa = response.Response;  // Asigna la recompensa cargada a la variable
+        // Si la recompensa tiene un ProyectoId, se selecciona el proyecto relacionado
+        if (Recompensa.ProyectoId.HasValue)
+        {
+            selectedProyectoId = Recompensa.ProyectoId.Value;
+        }
+        // Realiza una solicitud para obtener los proyectos disponibles
+        var proyectosResponse = await repository.Get<List<Proyecto>>("/api/proyectos");
+        if (!proyectosResponse.Error && proyectosResponse.Response is not null)
+        {
+            proyectos = proyectosResponse.Response; // Asigna la lista de proyectos a la variable
+        
+        }
+    }
+    // Método que se ejecuta cuando el formulario es enviado (si los datos son válidos)
+    private async Task HandleValidSubmit()
+    {
+        // Confirmación antes de guardar los cambios
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea guardar los cambios?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+        // Si el usuario confirma, realiza la solicitud para guardar los cambios
+        if (confirmResult.IsConfirmed)
+        {
+            Recompensa.ProyectoId = selectedProyectoId;  // Asigna el proyecto seleccionado a la recompensa
+
+            var response = await repository.Put($"/api/recompensas/{Id}", Recompensa); // Realiza la solicitud PUT para editar la recompensa
+            if (response.Error)
+            {
+                // Si hay un error, muestra un mensaje de error
+                var mensajeError = await response.GetErrorMessage();
+                await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
+            }
+            else
+            {
+                // Si los cambios fueron guardados con éxito, muestra un mensaje de éxito y redirige a la lista de recompensas
+                await swal.FireAsync("Éxito", "La recompensa ha sido editada.", SweetAlertIcon.Success);
+                NavigationManager.NavigateTo("/recompensas");
+            }
+        }
+    }
+    // Método para cancelar la edición y regresar a la lista de recompensas
+    private async Task CancelEdit()
+    {
+        // Solicita confirmación antes de cancelar la operación
+        var confirmResult = await swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmación",
+                Text = "¿Está seguro de que desea cancelar la operación?",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí",
+                CancelButtonText = "No"
+            });
+        // Si el usuario confirma la cancelación, redirige a la lista de recompensas
+        if (confirmResult.IsConfirmed)
+        {
+            NavigationManager.NavigateTo("/recompensas");
+        }
+    }
+}

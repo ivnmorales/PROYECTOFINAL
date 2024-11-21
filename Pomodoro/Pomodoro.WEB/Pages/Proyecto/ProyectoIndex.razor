@@ -5,78 +5,100 @@
 @inject SweetAlertService swal
 @inject NavigationManager NavigationManager
 
+@using Microsoft.AspNetCore.Authorization;
+@*// Restringe el acceso a este componente solo a usuarios con el rol de "Admin"*@
+@attribute [Authorize(Roles = "Admin")] 
+
 <h3>Lista de Proyectos</h3>
 
-<div class="mb-3">
-    <a class="btn btn-primary" href="/proyectos/create">Nuevo Proyecto</a>
-</div>
+@if (proyectos == null) @*// Muestra un spinner mientras se cargan los datos*@
+{
+    <div class="spinner" />
+}
+else
+{
+    <GenericList MyList="proyectos">
+        <Body>
+            <div class="card">
+                <div class="card-header">
+                    <span>
+                        <i class="oi oi-briefcase"></i> Proyectos
+                        <a class="btn btn-sm btn-success float-end" href="/proyectos/create">
+                            <i class="oi oi-plus"></i> Nuevo Proyecto
+                        </a>
+                    </span>
+                </div>
 
-<GenericList MyList="proyectos">
-    <Body>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Fecha de Creación</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (proyectos != null && proyectos.Any())
-                {
-                    @foreach (var proyecto in proyectos)
-                    {
-                        <tr>
-                            <td>@proyecto.Nombre</td>
-                            <td>@proyecto.Descripcion</td>
-                            <td>@proyecto.FechaCreacion.ToShortDateString()</td>
-                            <td>
-                                <a class="btn btn-secondary" @onclick="@(() => EditProyecto(proyecto.Id))">Editar</a>
-                                <button class="btn btn-danger" @onclick="@(() => DeleteProyecto(proyecto.Id))">Borrar</button>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="4" class="text-center">No hay proyectos disponibles.</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </Body>
-</GenericList>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Fecha de Creación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (proyectos.Any())
+                            {
+                                @foreach (var proyecto in proyectos)
+                                {
+                                    <tr>
+                                        <td>@proyecto.Nombre</td>
+                                        <td>@proyecto.Descripcion</td>
+                                        <td>@proyecto.FechaCreacion.ToShortDateString()</td>
+                                        <td>
+                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditProyecto(proyecto.Id))">
+                                                <i class="oi oi-pencil"></i> Editar
+                                            </a>
+                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteProyecto(proyecto.Id))">
+                                                <i class="oi oi-trash"></i> Borrar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay proyectos disponibles.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </Body>
+    </GenericList>
+}
 
 @code {
-    public List<Proyecto>? proyectos { get; set; }
-
-    // Método que se ejecuta al inicializar la página
+    public List<Proyecto>? proyectos { get; set; } // Lista de proyectos cargados desde la API
+    // Método que se ejecuta al inicializar el componente
     protected async override Task OnInitializedAsync()
     {
-        var responseHttp = await repository.Get<List<Proyecto>>("/api/proyectos");
+        var responseHttp = await repository.Get<List<Proyecto>>("/api/proyectos"); // Llama a la API para obtener los proyectos
 
-        if (responseHttp.Error)
+        if (responseHttp.Error) // Manejo de errores en la respuesta de la API
         {
             var mensajeError = await responseHttp.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
         }
         else
         {
-            proyectos = responseHttp.Response!;
+            proyectos = responseHttp.Response!; // Asigna los proyectos obtenidos a la propiedad
         }
     }
-
-    // Método para navegar a la página de edición del proyecto
+    // Método para redirigir al formulario de edición de un proyecto
     private void EditProyecto(int id)
     {
         NavigationManager.NavigateTo($"/proyectos/edit/{id}");
     }
-
-    // Método para borrar un proyecto
+    // Método para eliminar un proyecto
     private async Task DeleteProyecto(int id)
     {
+        // Mostrar alerta de confirmación antes de eliminar
         var respuesta = await swal.FireAsync(new SweetAlertOptions
             {
                 Title = "Confirmación",
@@ -87,19 +109,19 @@
                 CancelButtonText = "No, cancelar"
             });
 
-        if (respuesta.IsConfirmed)
+        if (respuesta.IsConfirmed) // Si el usuario confirma, se procede a eliminar
         {
-            var response = await repository.Delete($"/api/proyectos/{id}");
+            var response = await repository.Delete($"/api/proyectos/{id}"); // Llama a la API para eliminar el proyecto
 
-            if (response.Error)
+            if (response.Error) // Manejo de errores al eliminar
             {
                 var mensajeError = await response.GetErrorMessage();
                 await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error);
             }
-            else
+            else // Muestra un mensaje de éxito y refresca la lista de proyectos
             {
                 await swal.FireAsync("Éxito", "Proyecto borrado exitosamente.", SweetAlertIcon.Success);
-                await OnInitializedAsync(); // Refresca la lista
+                await OnInitializedAsync(); // Refresca la lista de proyectos
             }
         }
     }
