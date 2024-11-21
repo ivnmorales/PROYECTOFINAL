@@ -6,7 +6,7 @@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
-@*// Solo los usuarios con el rol 'Admin' pueden acceder a esta página*@
+@* // Solo los usuarios con el rol 'Admin' pueden acceder a esta página *@
 @attribute [Authorize(Roles = "Admin")]
 
 <h3>Lista de Tareas</h3>
@@ -14,70 +14,69 @@
 @if (tareas == null) // Si las tareas no han sido cargadas aún
 {
     <div class="spinner" />
+    // Muestra un spinner mientras se cargan los datos
 }
 else
 {
-    <GenericList MyList="tareas">
-        <Body>
-            <div class="card">
-                <div class="card-header">
-                    <span>
-                        <i class="oi oi-list"></i> Tareas
-                        <a class="btn btn-sm btn-success float-end" href="/tareas/create">
-                            <i class="oi oi-plus"></i> Nueva Tarea
-                        </a>
-                    </span>
-                </div>
+    <div class="card">
+        <!-- Contenedor de la tarjeta -->
+        <div class="card-header">
+            <span>
+                <i class="oi oi-list"></i> Tareas <!-- Ícono de lista -->
+                <a class="btn btn-sm btn-success float-end" href="/tareas/create">
+                    <i class="fas fa-plus"></i> Nueva Tarea <!-- Botón para agregar una nueva tarea -->
+                </a>
+            </span>
+        </div>
 
-                <div class="card-body">
-                    <table class="table table-striped">
-                        <thead>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Descripción</th>
+                        <th>Fecha Límite</th>
+                        <th>Proyecto</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (tareas.Any()) // Si existen tareas, las muestra
+                    {
+                        @foreach (var tarea in tareas)
+                        {
                             <tr>
-                                <th>Título</th>
-                                <th>Descripción</th>
-                                <th>Fecha Límite</th>
-                                <th>Proyecto</th>
-                                <th>Acciones</th>
+                                <td>@tarea.Titulo</td>
+                                <td>@tarea.Descripcion</td>
+                                <td>@tarea.FechaLimite.ToShortDateString()</td>
+                                <td>@(tarea.ProyectoId != null ? proyectos.FirstOrDefault(p => p.Id == tarea.ProyectoId)?.Nombre : "N/A")</td>
+                                <td>
+                                    <a class="btn btn-secondary btn-sm" @onclick="@(() => EditTarea(tarea.Id))">
+                                        <i class="fas fa-edit"></i> Editar <!-- Botón para editar tarea -->
+                                    </a>
+                                    <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteTarea(tarea.Id))">
+                                        <i class="fas fa-trash"></i> Borrar <!-- Botón para eliminar tarea -->
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @if (tareas.Any())
-                            {
-                                @foreach (var tarea in tareas)
-                                {
-                                    <tr>
-                                        <td>@tarea.Titulo</td>
-                                        <td>@tarea.Descripcion</td>
-                                        <td>@tarea.FechaLimite.ToShortDateString()</td>
-                                        <td>@(tarea.ProyectoId != null ? proyectos.FirstOrDefault(p => p.Id == tarea.ProyectoId)?.Nombre : "N/A")</td>
-                                        <td>
-                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditTarea(tarea.Id))">
-                                                <i class="oi oi-pencil"></i> Editar
-                                            </a>
-                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteTarea(tarea.Id))">
-                                                <i class="oi oi-trash"></i> Borrar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else
-                            {
-                                <tr>
-                                    <td colspan="5" class="text-center">No hay tareas disponibles.</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </Body>
-    </GenericList>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center">No hay tareas disponibles.</td> <!-- Mensaje cuando no hay tareas -->
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 @code {
     public List<TareaDto>? tareas { get; set; } // Lista de tareas a mostrar
     private List<Proyecto> proyectos = new(); // Lista de proyectos disponibles
+
     // Se ejecuta cuando el componente es inicializado
     protected async override Task OnInitializedAsync()
     {
@@ -85,7 +84,6 @@ else
         var responseHttp = await repository.Get<List<TareaDto>>("/api/tareas");
 
         if (responseHttp.Error)  // Si hay error al obtener las tareas
-        
         {
             var mensajeError = await responseHttp.GetErrorMessage();
             await swal.FireAsync("Error", mensajeError, SweetAlertIcon.Error); // Muestra mensaje de error
@@ -102,11 +100,13 @@ else
             }
         }
     }
+
     // Método para redirigir al usuario a la página de edición de una tarea
     private void EditTarea(int id)
     {
         NavigationManager.NavigateTo($"/tareas/edit/{id}"); // Redirige a la página de edición con el id de la tarea
     }
+
     // Método para borrar una tarea
     private async Task DeleteTarea(int id)
     {
@@ -133,7 +133,7 @@ else
             else // Si la tarea fue borrada exitosamente
             {
                 await swal.FireAsync("Éxito", "Tarea borrada exitosamente.", SweetAlertIcon.Success);
-                await OnInitializedAsync();
+                await OnInitializedAsync(); // Vuelve a cargar las tareas
             }
         }
     }
