@@ -7,7 +7,7 @@
 
 @using Microsoft.AspNetCore.Authorization;
 @*// Restringe el acceso a este componente solo a usuarios con el rol de "Admin"*@
-@attribute [Authorize(Roles = "Admin")] 
+@attribute [Authorize(Roles = "Admin")]
 
 <h3>Lista de Proyectos</h3>
 
@@ -17,65 +17,63 @@
 }
 else
 {
-    <GenericList MyList="proyectos">
-        <Body>
-            <div class="card">
-                <div class="card-header">
-                    <span>
-                        <i class="oi oi-briefcase"></i> Proyectos
-                        <a class="btn btn-sm btn-success float-end" href="/proyectos/create">
-                            <i class="oi oi-plus"></i> Nuevo Proyecto
-                        </a>
-                    </span>
-                </div>
+    <div class="card">
+        <div class="card-header">
+            <span>
+                <i class="oi oi-briefcase"></i> Proyectos
+                <a class="btn btn-sm btn-success float-end" href="/proyectos/create">
+                    <i class="fas fa-plus"></i> Nuevo Proyecto
+                </a>
+            </span>
+        </div>
 
-                <div class="card-body">
-                    <table class="table table-striped">
-                        <thead>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Fecha de Creación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (proyectos.Any())
+                    {
+                        @foreach (var proyecto in proyectos)
+                        {
                             <tr>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Fecha de Creación</th>
-                                <th>Acciones</th>
+                                <td>@proyecto.Nombre</td>
+                                <td>@proyecto.Descripcion</td>
+                                <td>@proyecto.FechaCreacion.ToShortDateString()</td>
+                                <td>
+                                    <!-- Botón de Editar -->
+                                    <a class="btn btn-secondary btn-sm" @onclick="@(() => EditProyecto(proyecto.Id))">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                    <!-- Botón de Borrar -->
+                                    <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteProyecto(proyecto.Id))">
+                                        <i class="fas fa-trash"></i> Borrar
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @if (proyectos.Any())
-                            {
-                                @foreach (var proyecto in proyectos)
-                                {
-                                    <tr>
-                                        <td>@proyecto.Nombre</td>
-                                        <td>@proyecto.Descripcion</td>
-                                        <td>@proyecto.FechaCreacion.ToShortDateString()</td>
-                                        <td>
-                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditProyecto(proyecto.Id))">
-                                                <i class="oi oi-pencil"></i> Editar
-                                            </a>
-                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteProyecto(proyecto.Id))">
-                                                <i class="oi oi-trash"></i> Borrar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else
-                            {
-                                <tr>
-                                    <td colspan="4" class="text-center">No hay proyectos disponibles.</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </Body>
-    </GenericList>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center">No hay proyectos disponibles.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 @code {
     public List<Proyecto>? proyectos { get; set; } // Lista de proyectos cargados desde la API
-    // Método que se ejecuta al inicializar el componente
+                                                   // Método que se ejecuta al inicializar el componente
     protected async override Task OnInitializedAsync()
     {
         var responseHttp = await repository.Get<List<Proyecto>>("/api/proyectos"); // Llama a la API para obtener los proyectos

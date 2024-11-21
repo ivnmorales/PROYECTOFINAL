@@ -25,7 +25,7 @@ else
             <span>
                 <i class="oi oi-clock"></i> Historial de Sesiones
                 <a class="btn btn-sm btn-success float-end" href="/historial-sesiones/create">
-                    <i class="oi oi-plus"></i> Nuevo Historial
+                    <i class="fas fa-plus"></i> Nuevo Historial
                 </a>
             </span>
         </div>
@@ -53,10 +53,10 @@ else
                                 <td>@GetSesionEstado(historial.SesionId)</td>
                                 <td>
                                     <a class="btn btn-secondary btn-sm" @onclick="@(() => EditHistorialSesion(historial.Id))">
-                                        <i class="oi oi-pencil"></i> Editar
+                                        <i class="fas fa-edit"></i> Editar
                                     </a>
                                     <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteHistorialSesion(historial.Id))">
-                                        <i class="oi oi-trash"></i> Borrar
+                                        <i class="fas fa-trash"></i> Borrar
                                     </button>
                                 </td>
                             </tr>

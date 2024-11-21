@@ -6,75 +6,78 @@
 @inject NavigationManager NavigationManager
 
 @using Microsoft.AspNetCore.Authorization;
-@*// Solo permite acceder a esta página si el usuario tiene el rol "Admin"*@
+@*// Solo permite acceder a esta página si el usuario tiene el rol "Admin"*@ 
 @attribute [Authorize(Roles = "Admin")] 
 
 <h3>Lista de Técnicas de Estudio</h3>
 
 @if (tecnicasEstudio == null)
 {
-    <div class="spinner" />
+        <div class="spinner" /> @* Muestra un indicador de carga si las técnicas de estudio aún no se han cargado *@
 }
 else
 {
-    <GenericList MyList="tecnicasEstudio">
-        <Body>
-            <div class="card">
-                <div class="card-header">
-                    <span>
-                        <i class="oi oi-book"></i> Técnicas de Estudio
-                        <a class="btn btn-sm btn-success float-end" href="/tecnicas-estudio/create">
-                            <i class="oi oi-plus"></i> Nueva Técnica de Estudio
-                        </a>
-                    </span>
-                </div>
+        <div class="card">
+            <div class="card-header">
+                <span>
+                    <i class="oi oi-book"></i> Técnicas de Estudio
+                    <a class="btn btn-sm btn-success float-end" href="/tecnicas-estudio/create">
+                        <i class="fas fa-plus"></i> Nueva Técnica de Estudio
+                    </a>
+                </span>
+            </div>
 
-                <div class="card-body">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Beneficios</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (tecnicasEstudio.Any())
-                            {
-                                @foreach (var tecnica in tecnicasEstudio)
-                                {
-                                    <tr>
-                                        <td>@tecnica.Nombre</td>
-                                        <td>@tecnica.Descripcion</td>
-                                        <td>@(string.IsNullOrEmpty(tecnica.Beneficios) ? "N/A" : tecnica.Beneficios)</td>
-                                        <td>
-                                            <a class="btn btn-secondary btn-sm" @onclick="@(() => EditTecnicaEstudio(tecnica.Id))">
-                                                <i class="oi oi-pencil"></i> Editar
-                                            </a>
-                                            <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteTecnicaEstudio(tecnica.Id))">
-                                                <i class="oi oi-trash"></i> Borrar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else
-                            {
+            <div class="card-body">
+            @* Mostrar la lista de técnicas de estudio en una tabla *@
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Beneficios</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @* Verifica si existen técnicas de estudio y las muestra en filas *@
+                    @if (tecnicasEstudio.Any())
+                    {
+                        @foreach (var tecnica in tecnicasEstudio)
+                        {
+                                        <tr>
+                                            <td>@tecnica.Nombre</td>
+                                            <td>@tecnica.Descripcion</td>
+                                            <td>@(string.IsNullOrEmpty(tecnica.Beneficios) ? "N/A" : tecnica.Beneficios)</td>
+                                            <td>
+                                    @* Botón para editar la técnica *@
+                                                <a class="btn btn-secondary btn-sm" @onclick="@(() => EditTecnicaEstudio(tecnica.Id))">
+                                                    <i class="fas fa-edit"></i> Editar
+                                                </a>
+                                    @* Botón para eliminar la técnica *@
+                                                <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteTecnicaEstudio(tecnica.Id))">
+                                                    <i class="fas fa-trash"></i> Borrar
+                                                </button>
+                                            </td>
+                                        </tr>
+                        }
+                    }
+                    else
+                    {
+                        @* Si no hay técnicas, muestra un mensaje indicando que no hay disponibles *@
                                 <tr>
                                     <td colspan="4" class="text-center">No hay técnicas de estudio disponibles.</td>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                    }
+                    </tbody>
+                </table>
             </div>
-        </Body>
-    </GenericList>
+        </div>
 }
 
 @code {
-    public List<TecnicaEstudioDto>? tecnicasEstudio { get; set; } // Lista de técnicas de estudio que se va a mostrar
+    // Lista de técnicas de estudio que se va a mostrar
+    public List<TecnicaEstudioDto>? tecnicasEstudio { get; set; }
+
     // Método que se ejecuta cuando el componente se inicializa
     protected async override Task OnInitializedAsync()
     {
@@ -91,11 +94,13 @@ else
             tecnicasEstudio = responseHttp.Response!; // Asigna la lista de técnicas de estudio
         }
     }
+
     // Método para redirigir a la página de edición de la técnica seleccionada
     private void EditTecnicaEstudio(int id)
     {
         NavigationManager.NavigateTo($"/tecnicas-estudio/edit/{id}");   // Navega a la página de edición
     }
+
     // Método para eliminar una técnica de estudio
     private async Task DeleteTecnicaEstudio(int id)
     {
