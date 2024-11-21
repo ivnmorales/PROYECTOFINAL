@@ -19,29 +19,41 @@ namespace Pomodoro.API.Controllers
         {
             _context = context;
         }
-        
-        // Obtiene todas las técnicas de estudio
+
+        // Obtiene todas las técnicas de estudio, incluyendo las sesiones asociadas
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TecnicaEstudioDto>>> GetTecnicasEstudio()
         {
             var tecnicas = await _context.TecnicasEstudio
+                .Include(t => t.SesionesPomodoro)
                 .Select(t => new TecnicaEstudioDto
                 {
                     Id = t.Id,
                     Nombre = t.Nombre,
                     Descripcion = t.Descripcion,
-                    Beneficios = t.Beneficios
+                    Beneficios = t.Beneficios,
+                    SesionesPomodoro = t.SesionesPomodoro.Select(s => new SesionPomodoroDto
+                    {
+                        Id = s.Id,
+                        Duracion = s.Duracion,
+                        FechaInicio = s.FechaInicio,
+                        FechaFin = s.FechaFin,
+                        Estado = s.Estado,
+                        ProyectoId = s.ProyectoId,
+                        TareaId = s.TareaId
+                    }).ToList()
                 })
                 .ToListAsync();
 
             return Ok(tecnicas);
         }
 
-        // Obtiene una técnica de estudio por id
+        // Obtiene una técnica de estudio por id, incluyendo las sesiones asociadas
         [HttpGet("{id}")]
         public async Task<ActionResult<TecnicaEstudioDto>> GetTecnicaEstudio(int id)
         {
             var tecnica = await _context.TecnicasEstudio
+                .Include(t => t.SesionesPomodoro)
                 .FirstOrDefaultAsync(t => t.Id == id); // Busca la técnica por id
 
             if (tecnica == null) return NotFound(); // Si no existe, retorna 404
@@ -51,21 +63,41 @@ namespace Pomodoro.API.Controllers
                 Id = tecnica.Id,
                 Nombre = tecnica.Nombre,
                 Descripcion = tecnica.Descripcion,
-                Beneficios = tecnica.Beneficios
+                Beneficios = tecnica.Beneficios,
+                SesionesPomodoro = tecnica.SesionesPomodoro.Select(s => new SesionPomodoroDto
+                {
+                    Id = s.Id,
+                    Duracion = s.Duracion,
+                    FechaInicio = s.FechaInicio,
+                    FechaFin = s.FechaFin,
+                    Estado = s.Estado,
+                    ProyectoId = s.ProyectoId,
+                    TareaId = s.TareaId
+                }).ToList()
             };
 
-            return Ok(tecnicaDto); // Retorna la técnica encontrada
+            return Ok(tecnicaDto);
         }
 
-        // Crea una nueva técnica de estudio
         [HttpPost]
         public async Task<ActionResult> PostTecnicaEstudio(CrearTecnicaEstudioDto tecnicaEstudioDto)
         {
+            // Buscar las sesiones Pomodoro asociadas por sus IDs
+            var sesionesPomodoro = await _context.SesionesPomodoro
+                .Where(s => tecnicaEstudioDto.SesionesPomodoroIds.Contains(s.Id))
+                .ToListAsync();
+
+            if (sesionesPomodoro.Count != tecnicaEstudioDto.SesionesPomodoroIds.Count)
+            {
+                return BadRequest("Algunas sesiones Pomodoro no existen.");
+            }
+
             var tecnica = new TecnicaEstudio
             {
                 Nombre = tecnicaEstudioDto.Nombre,
                 Descripcion = tecnicaEstudioDto.Descripcion,
-                Beneficios = tecnicaEstudioDto.Beneficios
+                Beneficios = tecnicaEstudioDto.Beneficios,
+                SesionesPomodoro = sesionesPomodoro // Asignar las sesiones Pomodoro encontradas
             };
 
             _context.TecnicasEstudio.Add(tecnica);
@@ -78,7 +110,7 @@ namespace Pomodoro.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTecnicaEstudio(int id, ActualizarTecnicaEstudioDto tecnicaEstudioDto)
         {
-            var tecnica = await _context.TecnicasEstudio.FindAsync(id);
+            var tecnica = await _context.TecnicasEstudio.Include(t => t.SesionesPomodoro).FirstOrDefaultAsync(t => t.Id == id);
             if (tecnica == null) return NotFound();
 
             tecnica.Nombre = tecnicaEstudioDto.Nombre;
