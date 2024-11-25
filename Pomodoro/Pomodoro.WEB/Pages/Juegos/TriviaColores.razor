@@ -1,0 +1,137 @@
+﻿@page "/juegos/trivia-colores"
+<h3 class="text-center title">Trivia de Colores</h3>
+
+<p class="text-center color-question" style="color: @color">¿Qué color es este?</p>
+
+<div class="text-center">
+    @foreach (var opcion in opciones)
+    {
+        <button class="btn color-btn" style="background-color: @GenerarColorAleatorio()" @onclick="() => VerificarColor(opcion)">
+            @opcion
+        </button>
+    }
+</div>
+
+<p class="text-center mt-2 message">@mensaje</p>
+
+@code {
+    private string color = "red";
+    private List<string> opciones = new() { "red", "blue", "green", "yellow" };
+    private string mensaje = "¡Adivina el color!";
+
+    private void VerificarColor(string opcion)
+    {
+        if (opcion == color)
+        {
+            mensaje = "¡Correcto! 🎉";
+            color = opciones[new Random().Next(opciones.Count)];
+        }
+        else
+        {
+            mensaje = "Incorrecto. Intenta de nuevo.";
+        }
+    }
+
+    // Generar un color aleatorio para los botones (que no sea el color de la respuesta correcta)
+    private string GenerarColorAleatorio()
+    {
+        Random rand = new Random();
+        var coloresDisponibles = new List<string> { "orange", "purple", "pink", "cyan", "lime" };
+        return coloresDisponibles[rand.Next(coloresDisponibles.Count)];
+    }
+}
+
+<style>
+    /* Contenedor principal */
+    .container {
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+        border-radius: 12px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Título */
+    .title {
+        font-size: 2.5rem;
+        color: #d32f2f; /* Rojo vibrante para coincidir con la página */
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    /* Pregunta del color */
+    .color-question {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+        transition: all 0.3s ease-in-out;
+    }
+
+        .color-question:hover {
+            transform: scale(1.1);
+        }
+
+    /* Estilo para los botones (con forma y colores más interesantes) */
+    .color-btn {
+        padding: 12px 30px;
+        font-size: 1.1rem;
+        margin: 10px;
+        border-radius: 50%; /* Botones redondeados */
+        border: 2px solid transparent;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease-in-out;
+        display: inline-block;
+        width: 120px;
+        height: 120px;
+        line-height: 120px; /* Centra el texto dentro del círculo */
+        text-align: center;
+    }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-btn:active {
+            transform: scale(0.98);
+        }
+
+    /* Estilo para el mensaje */
+    .message {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 20px;
+        transition: all 0.3s ease-in-out;
+    }
+
+        .message:before {
+            content: "🎨 ";
+            font-size: 1.5rem;
+        }
+
+    /* Efectos de animación para los botones */
+    .color-btn:focus {
+        outline: none;
+        box-shadow: 0 0 10px 4px rgba(255, 87, 34, 0.6); /* Sombra roja al hacer clic */
+    }
+
+    /* Aseguramos que los botones se vean bien centrados */
+    .text-center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    /* Estilo de fondo */
+    body {
+        background-color: #fce4ec; /* Fondo suave y agradable */
+    }
+</style>

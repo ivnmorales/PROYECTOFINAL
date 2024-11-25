@@ -1,0 +1,138 @@
+﻿@page "/juegos/suma-rapida"
+<h3 class="text-center title">Suma Rápida</h3>
+
+<p class="text-center question">¿Cuánto es @num1 + @num2?</p>
+
+<div class="game-container">
+    <div class="game-area">
+        <div class="input-container text-center">
+            <input type="number" @bind="respuesta" class="form-control mb-2 input-field" style="max-width: 200px;" />
+            <button class="btn btn-submit" @onclick="VerificarRespuesta">Enviar</button>
+        </div>
+        <p class="text-center message">@mensaje</p>
+        @if (!string.IsNullOrEmpty(mensaje) && mensaje.Contains("Correcto"))
+        {
+            <button class="btn btn-restart" @onclick="ReiniciarJuego">Volver a Jugar</button>
+        }
+    </div>
+</div>
+
+<style>
+    /* Contenedor principal */
+    .game-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, rgba(255, 99, 71, 0.7), rgba(255, 87, 34, 0.7));
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Área del juego */
+    .game-area {
+        width: 320px;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Título */
+    .title {
+        font-size: 2rem;
+        color: #ff5722;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+
+    /* Pregunta */
+    .question {
+        font-size: 1.5rem;
+        color: #0288d1;
+        margin-bottom: 15px;
+    }
+
+    /* Estilo del input */
+    .input-field {
+        font-size: 1.2rem;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #ff5722;
+        margin-bottom: 20px;
+        transition: border-color 0.3s ease;
+    }
+
+        .input-field:focus {
+            border-color: #ff5722;
+            box-shadow: 0 0 5px rgba(255, 87, 34, 0.5);
+        }
+
+    /* Estilo del botón de enviar */
+    .btn-submit {
+        background-color: #0288d1;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-size: 1.1rem;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-submit:hover {
+            background-color: #0277bd;
+        }
+
+    /* Estilo del mensaje */
+    .message {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-top: 15px;
+        color: #ff5722;
+    }
+
+    /* Estilo del botón de reiniciar */
+    .btn-restart {
+        background-color: #ff5722;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-size: 1.1rem;
+        margin-top: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-restart:hover {
+            background-color: #e64a19;
+        }
+</style>
+
+@code {
+    private int num1 = new Random().Next(1, 20);
+    private int num2 = new Random().Next(1, 20);
+    private int respuesta;
+    private string mensaje = "Responde correctamente para ganar.";
+
+    private void VerificarRespuesta()
+    {
+        if (respuesta == num1 + num2)
+        {
+            mensaje = "¡Correcto! 🎉";
+        }
+        else
+        {
+            mensaje = "Incorrecto. Intenta de nuevo.";
+        }
+    }
+
+    private void ReiniciarJuego()
+    {
+        num1 = new Random().Next(1, 20);
+        num2 = new Random().Next(1, 20);
+        respuesta = 0;
+        mensaje = "Responde correctamente para ganar.";
+    }
+}

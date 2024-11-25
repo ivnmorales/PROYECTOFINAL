@@ -18,6 +18,9 @@
                         <button class="btn btn-secondary" @onclick="ResetTimer">Reset</button>
                     </div>
                 </div>
+                <div class="motivational-message">
+                    <p>@GetRandomMessage()</p>
+                </div>
             </div>
         </Authorized>
         <NotAuthorized>
@@ -44,7 +47,25 @@
     private string timerButtonText = "Start";
     private System.Timers.Timer? timer;
 
+    private List<string> motivationalMessages = new List<string>
+    {
+        "¡Sigue adelante! ¡Eres imparable!",
+        "¡Los pequeños avances cuentan! 💪",
+        "¡Un paso más cerca de tus sueños! 🚀",
+        "¡Estás haciendo un gran trabajo! 🙌",
+        "Recuerda: cada segundo cuenta. ⏳",
+        "¡La perseverancia trae el éxito! 💡",
+        "¡Lo que logres hoy te hará brillar mañana! ✨"
+    };
+
     private string FormattedTime => $"{timeLeft / 60:D2}:{timeLeft % 60:D2}";
+
+    private string GetRandomMessage()
+    {
+        Random rand = new Random();
+        int index = rand.Next(motivationalMessages.Count);
+        return motivationalMessages[index];
+    }
 
     private void StartStopTimer()
     {
@@ -99,6 +120,6 @@
 
     private void NavigateToRegister()
     {
-        NavigationManager.NavigateTo("/register"); // Ruta de la página de registro
+        NavigationManager.NavigateTo("/register"); // Ruta de registro
     }
 }
