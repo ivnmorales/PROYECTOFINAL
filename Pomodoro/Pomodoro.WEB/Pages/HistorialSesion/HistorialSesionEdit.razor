@@ -7,10 +7,7 @@
 @inject SweetAlertService swal
 @*// Inyecta el servicio NavigationManager para manejar la navegación entre páginas.*@
 @inject NavigationManager navigationManager 
-@*Importa funcionalidades de autorización para restringir acceso al componente.*@
-@using Microsoft.AspNetCore.Authorization;
-@*Restringe el acceso a este componente solo a usuarios con el rol "Admin".*@
-@attribute [Authorize(Roles = "Admin")]
+
 
 <h3>Editar Historial de Sesión</h3>
 

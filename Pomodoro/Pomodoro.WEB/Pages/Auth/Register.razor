@@ -112,7 +112,7 @@
         }
         // Configura valores adicionales para el registro del usuario.
         userDTO.UserName = userDTO.Email;
-        userDTO.UserType = UserType.Admin;
+        userDTO.UserType = UserType.User;
         // Envía los datos a la API para crear el usuario.
         var responseHttp = await repository.Post("/api/accounts/CreateUser", userDTO);
 

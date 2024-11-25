@@ -1,0 +1,152 @@
+﻿@page "/juegos/adivina-numero"
+
+<div class="game-container">
+    <div class="header">
+        <h3 class="title">🎯 Adivina el Número</h3>
+        <p class="description">@mensaje</p>
+    </div>
+
+    <div class="game-box">
+        <input type="number" @bind="respuesta" class="form-control input-field" placeholder="Introduce un número" />
+        <button class="btn btn-send" @onclick="VerificarNumero">Enviar</button>
+    </div>
+
+    <p class="attempts"><strong>Intentos:</strong> @intentos</p>
+
+    @if (mensaje.Contains("🎉 ¡Correcto!"))
+    {
+        <div>
+            <button class="btn btn-reset" @onclick="ReiniciarJuego">Volver a Jugar</button>
+        </div>
+    }
+</div>
+
+@code {
+    private int numeroSecreto = new Random().Next(1, 100);
+    private int respuesta;
+    private int intentos = 0;
+    private string mensaje = "🎮 ¡Adivina el número entre 1 y 100!";
+
+    private void VerificarNumero()
+    {
+        intentos++;
+        if (respuesta == numeroSecreto)
+        {
+            mensaje = "🎉 ¡Correcto! Adivinaste el número.";
+        }
+        else if (respuesta < numeroSecreto)
+        {
+            mensaje = "🔼 El número es más alto.";
+        }
+        else
+        {
+            mensaje = "🔽 El número es más bajo.";
+        }
+    }
+
+    private void ReiniciarJuego()
+    {
+        numeroSecreto = new Random().Next(1, 100);
+        respuesta = 0;
+        intentos = 0;
+        mensaje = "🎮 ¡Adivina el número entre 1 y 100!";
+    }
+}
+
+<style>
+    /* Contenedor principal */
+    .game-container {
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #ff7675, #fab1a0);
+        border-radius: 16px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        color: white;
+    }
+
+    /* Encabezado */
+    .header {
+        margin-bottom: 20px;
+    }
+
+    .title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .description {
+        font-size: 1.2rem;
+        font-style: italic;
+    }
+
+    /* Caja del juego */
+    .game-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Campo de entrada */
+    .input-field {
+        max-width: 300px;
+        padding: 12px;
+        margin: 10px 0;
+        font-size: 1.2rem;
+        border-radius: 10px;
+        border: 2px solid #ffeaa7;
+        transition: 0.3s;
+    }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #d63031;
+            box-shadow: 0 0 10px rgba(214, 48, 49, 0.7);
+        }
+
+    /* Botón de envío */
+    .btn-send {
+        background-color: #d63031;
+        color: white;
+        padding: 12px 24px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .btn-send:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(214, 48, 49, 0.6);
+        }
+
+    /* Intentos */
+    .attempts {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-top: 15px;
+        color: #ffeaa7;
+    }
+
+    /* Botón de reiniciar */
+    .btn-reset {
+        background-color: #4caf50;
+        color: white;
+        padding: 12px 24px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .btn-reset:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.6);
+        }
+</style>

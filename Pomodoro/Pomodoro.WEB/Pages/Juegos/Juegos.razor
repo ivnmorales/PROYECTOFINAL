@@ -1,0 +1,116 @@
+﻿@page "/juegos"
+@using Pomodoro.Shared.Dtos
+
+<div class="container text-center mt-5">
+    <h1 class="title">Juegos</h1>
+    <p class="description">Relájate y diviértete con los siguientes juegos:</p>
+
+    <div class="d-grid gap-3">
+        <a class="btn btn-trivia btn-lg" href="juegos/trivia-colores">
+            <i class="fas fa-palette"></i> Juego 1: Trivia de Colores
+        </a>
+        <a class="btn btn-number btn-lg" href="juegos/adivina-numero">
+            <i class="fas fa-question-circle"></i> Juego 2: Adivina el Número
+        </a>
+        <a class="btn btn-memory btn-lg" href="/juegos/haz-clic-circulo">
+            <i class="fas fa-circle"></i> Juego 3: ClickClick
+        </a>
+        <a class="btn btn-suma btn-lg" href="juegos/suma-rapida">
+            <i class="fas fa-calculator"></i> Juego 4: Suma Rápida
+        </a>
+    </div>
+</div>
+
+<!-- Cargar Font Awesome -->
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+
+<style>
+    /* Estilos generales */
+    .container {
+        max-width: 700px;
+        margin: auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .title {
+        font-size: 2.5rem;
+        color: #333;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .description {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    /* Botones */
+    .btn-game {
+        text-align: center;
+        font-size: 1.1rem;
+        padding: 15px;
+        border-radius: 8px;
+        transition: all 0.3s ease-in-out;
+    }
+
+        .btn-game:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+    /* Estilo de botones personalizados */
+    .btn-trivia {
+        background-color: #ff6347; /* Rojo tomate */
+        border-color: #ff6347;
+    }
+
+        .btn-trivia:hover {
+            background-color: #e55347;
+            border-color: #e55347;
+        }
+
+    .btn-number {
+        background-color: #4682b4; /* Azul acero */
+        border-color: #4682b4;
+    }
+
+        .btn-number:hover {
+            background-color: #3b6a92;
+            border-color: #3b6a92;
+        }
+
+    .btn-memory {
+        background-color: #32cd32; /* Verde lima */
+        border-color: #32cd32;
+    }
+
+        .btn-memory:hover {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+    .btn-suma {
+        background-color: #ff9900; /* Naranja */
+        border-color: #ff9900;
+    }
+
+        .btn-suma:hover {
+            background-color: #e68a00;
+            border-color: #e68a00;
+        }
+
+    /* Estilos de los iconos */
+    .btn i {
+        margin-right: 10px;
+        font-size: 1.3rem;
+    }
+
+    /* Ajustes de estilo en los enlaces de los botones */
+    .d-grid .btn {
+        width: 100%;
+    }
+</style>

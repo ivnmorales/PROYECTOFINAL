@@ -9,9 +9,7 @@
 
 @inject SweetAlertService swal // Inyecta el servicio SweetAlertService para mostrar notificaciones al usuario.
 
-@using Microsoft.AspNetCore.Authorization; @* Importa funcionalidades de autorización para restringir acceso al componente.*@
-@*Restringe el acceso a este componente solo a usuarios con rol de "Admin".*@
-@attribute [Authorize(Roles = "Admin")]   
+ 
 
 <h3>Crear Nuevo Historial de Sesión</h3>
 
