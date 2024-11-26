@@ -16,5 +16,7 @@
 
         // Elimina un recurso en la URL especificada
         Task<HttpResponseWrapper<object>> Delete(string url);
+        Task<HttpResponseWrapper<object>> Get(string url);
+        Task<HttpResponseWrapper<TResponse>> Put<T, TResponse>(string url, T model);
     }
 }
