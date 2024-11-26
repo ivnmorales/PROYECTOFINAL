@@ -1,77 +1,67 @@
-.page {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-
-main {
-    flex: 1;
-}
-
-.sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-}
-
+/* Top bar container */
 .top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
-    height: 3.5rem;
+    background: linear-gradient(90deg, #3a0647, #052767); /* Gradiente moderno */
+    color: #fff; /* Texto blanco para contraste */
+    height: 4rem;
     display: flex;
     align-items: center;
+    justify-content: space-between; /* Espacio entre elementos */
+    padding: 0 2rem; /* Espaciado interno */
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
+    /* Enlaces y botones dentro de la top bar */
     .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
+        color: #fff; /* Texto blanco */
+        font-weight: 500;
         text-decoration: none;
+        margin-left: 1.5rem;
+        transition: color 0.3s ease;
     }
 
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
+        .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
+            color: #ffcb47; /* Cambio a un color dorado al pasar el cursor */
+        }
+
+    /* Usuario autenticado: nombre y foto */
+    .top-row .user-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem; /* Espaciado entre foto y nombre */
     }
 
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .top-row .user-photo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%; /* Foto circular */
+        object-fit: cover; /* Ajuste de imagen */
+        border: 2px solid #ffcb47; /* Borde dorado */
+        box-shadow: 0 0 5px rgba(255, 203, 71, 0.7); /* Sombra alrededor */
     }
 
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
+    .top-row .user-name {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #fff;
     }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
-}
-
-@media (min-width: 641px) {
-    .page {
-        flex-direction: row;
-    }
-
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
+    /* Botón cerrar sesión */
+    .top-row .logout-button {
+        background-color: #ff6347; /* Rojo llamativo */
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px; /* Botón redondeado */
+        color: #fff;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
-
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
-    }
-}
+        .top-row .logout-button:hover {
+            background-color: #e03e2d; /* Cambio de color al pasar el cursor */
+            transform: scale(1.05); /* Pequeño aumento */
+        }

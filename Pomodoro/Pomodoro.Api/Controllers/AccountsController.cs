@@ -8,8 +8,10 @@ using Pomodoro.API.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
-
+//
 namespace Pomodoro.API.Controllers
 {
     [ApiController]
@@ -25,15 +27,23 @@ namespace Pomodoro.API.Controllers
 
         private readonly IConfiguration _configuration;// Permite acceder a configuraciones como claves de seguridad.
 
+        private readonly IFileStorage _fileStorage;
+
+        private readonly string _container;
+
 
         //Constructor
-        public AccountsController(IUserHelper userHelper, IConfiguration configuration)
+        public AccountsController(IUserHelper userHelper, IConfiguration configuration, IFileStorage fileStorage)
 
         {
 
             _userHelper = userHelper;
 
             _configuration = configuration;
+
+            _fileStorage = fileStorage;
+
+            _container = "users";
 
         }
 
@@ -48,6 +58,16 @@ namespace Pomodoro.API.Controllers
             User user = model;//convierte el DTO en una entidad User
 
             var result = await _userHelper.AddUserAsync(user, model.Password);
+
+            if (!string.IsNullOrEmpty(model.Photo))
+
+            {
+
+                var photoUser = Convert.FromBase64String(model.Photo);
+
+                model.Photo = await _fileStorage.SaveFileAsync(photoUser, ".jpg", _container);
+
+            }
 
             if (result.Succeeded)//si la creacion sale bien
 
@@ -149,6 +169,139 @@ namespace Pomodoro.API.Controllers
                 Expiration = expiration
 
             };
+
+        }
+        [HttpPut]
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+
+        public async Task<ActionResult> Put(User user)
+
+        {
+
+            try
+
+            {
+
+                if (!string.IsNullOrEmpty(user.Photo))
+
+                {
+
+                    var photoUser = Convert.FromBase64String(user.Photo);
+
+                    user.Photo = await _fileStorage.SaveFileAsync(photoUser, ".jpg", _container);
+
+                }
+
+
+
+                var currentUser = await _userHelper.GetUserAsync(user.Email!);
+
+                if (currentUser == null)
+
+                {
+
+                    return NotFound();
+
+                }
+
+
+
+                currentUser.Document = user.Document;
+
+                currentUser.FirstName = user.FirstName;
+
+                currentUser.LastName = user.LastName;
+
+                currentUser.PhoneNumber = user.PhoneNumber;
+
+                currentUser.Photo = !string.IsNullOrEmpty(user.Photo) && user.Photo != currentUser.Photo ? user.Photo : currentUser.Photo;
+
+
+
+                var result = await _userHelper.UpdateUserAsync(currentUser);
+
+                if (result.Succeeded)
+
+                {
+
+                    return NoContent();
+
+                }
+
+
+
+                return BadRequest(result.Errors.FirstOrDefault());
+
+            }
+
+            catch (Exception ex)
+
+            {
+
+                return BadRequest(ex.Message);
+
+            }
+
+        }
+
+
+
+        [HttpGet]
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+
+        public async Task<ActionResult> Get()
+
+        {
+
+            return Ok(await _userHelper.GetUserAsync(User.Identity!.Name!));
+
+        }
+
+        [HttpPost("changePassword")]
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+
+        public async Task<ActionResult> ChangePasswordAsync(ChangePasswordDTO model)
+
+        {
+
+            if (!ModelState.IsValid)
+
+            {
+
+                return BadRequest(ModelState);
+
+            }
+
+
+
+            var user = await _userHelper.GetUserAsync(User.Identity!.Name!);
+
+            if (user == null)
+
+            {
+
+                return NotFound();
+
+            }
+
+
+
+            var result = await _userHelper.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+
+            if (!result.Succeeded)
+
+            {
+
+                return BadRequest(result.Errors.FirstOrDefault().Description);
+
+            }
+
+
+
+            return NoContent();
 
         }
 

@@ -1,19 +1,42 @@
 ﻿<AuthorizeView>
-
     <Authorized>
+        <!-- Foto de usuarios -->
+        @if (!string.IsNullOrEmpty(photoUser))
+        {
+            <div class="mx-2">
+                <img src="@photoUser" width="50" height="50" style="border-radius:50%" alt="User Photo" />
+            </div>
+        }
 
-        <span>Hola, @context.User.Identity!.Name</span>
+        <!-- Nombre del usuario -->
+        <a href="EditUser" class="nav-link btn btn-link">@context.User.Identity!.Name</a>
 
+        <!-- Enlace para cerrar sesión -->
         <a href="Logout" class="nav-link btn btn-link">Cerrar Sesión</a>
-
     </Authorized>
-
     <NotAuthorized>
-
-        <a href="Register" class="nav-link btn btn-link">Registro</a>
-
-        <a href="Login" class="nav-link btn btn-link">Iniciar Sesión</a>
-
+        <!-- No mostrar nada cuando no está autenticado -->
     </NotAuthorized>
+</AuthorizeView>
 
-</AuthorizeView> 
+@code {
+    private string? photoUser;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var authenticationState = await authenticationStateTask;
+
+        // Obtiene los claims del usuario autenticado
+        var claims = authenticationState.User.Claims.ToList();
+
+        // Verifica si existe el claim "Photo" y lo asigna
+        var photoClaim = claims.FirstOrDefault(x => x.Type == "Photo");
+        if (photoClaim is not null)
+        {
+            photoUser = photoClaim.Value; // Asigna la URL de la foto al atributo
+        }
+    }
+}
