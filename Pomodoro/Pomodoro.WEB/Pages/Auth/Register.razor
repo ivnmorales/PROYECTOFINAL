@@ -101,32 +101,36 @@
 @code {
     private UserDTO userDTO = new();  // Modelo que representa los datos del usuario.
     private string? imageUrl; // URL para la previsualización de la imagen de perfil.
+    private bool loading = false; // Indicador de carga para el proceso de registro.
 
-    // Método que crea el usuario cuando se envía el formulario.
     private async Task CreateUserAsync()
     {
-        if (userDTO.Password != userDTO.PasswordConfirm)  // Verifica si las contraseñas coinciden.
+        if (userDTO.Password != userDTO.PasswordConfirm)
         {
             await sweetAlertService.FireAsync("Error", "Las contraseñas no coinciden.", SweetAlertIcon.Error);
             return;
         }
-        // Configura valores adicionales para el registro del usuario.
+
+        loading = true;
+
         userDTO.UserName = userDTO.Email;
         userDTO.UserType = UserType.User;
-        // Envía los datos a la API para crear el usuario.
-        var responseHttp = await repository.Post("/api/accounts/CreateUser", userDTO);
 
-        if (responseHttp.Error) // Manejo de errores si la API devuelve un problema.
+        var responseHttp = await repository.Post<UserDTO>("/api/accounts/CreateUser", userDTO);
+
+        if (responseHttp.Error)
         {
             var message = await responseHttp.GetErrorMessage();
-            await sweetAlertService.FireAsync("Error", message ?? "Error desconocido", SweetAlertIcon.Error);
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            loading = false;
             return;
         }
-        // Muestra un mensaje de éxito y redirige al usuario a la página principal.
-        await sweetAlertService.FireAsync("Confirmación", "Su cuenta ha sido creada con éxito. Se le ha enviado un correo electrónico con instrucciones para activar su usuario.", SweetAlertIcon.Info);
+
+        loading = false;
+        await sweetAlertService.FireAsync("Confirmación", "Su cuenta ha sido creada con éxito. Se te ha enviado un correo electrónico con las instrucciones para activar tu usuario.", SweetAlertIcon.Info);
         navigationManager.NavigateTo("/");
     }
-    // Método que se ejecuta al seleccionar una imagen de perfil.
+
     private void ImageSelected(string imagenBase64)
     {
         userDTO.Photo = imagenBase64;
@@ -135,7 +139,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!string.IsNullOrEmpty(userDTO.Photo)) // Si ya existe una imagen previa, configúrala para previsualización.
+        if (!string.IsNullOrEmpty(userDTO.Photo))
         {
             imageUrl = userDTO.Photo;
             userDTO.Photo = null;

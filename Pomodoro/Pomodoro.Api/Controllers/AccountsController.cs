@@ -19,158 +19,120 @@ namespace Pomodoro.API.Controllers
     [Route("/api/accounts")]// Ruta para acceder a este controlador.
 
     public class AccountsController : ControllerBase
-
     {
-        // Dependencias del controlador: ayudan a manejar los usuarios y configuraciones.
-
-        private readonly IUserHelper _userHelper;// Helper para operaciones relacionadas con usuarios.
-
-        private readonly IConfiguration _configuration;// Permite acceder a configuraciones como claves de seguridad.
-
+        private readonly IUserHelper _userHelper;
+        private readonly IConfiguration _configuration;
         private readonly IFileStorage _fileStorage;
-
         private readonly string _container;
+        private readonly IMailHelper _mailHelper;
+        private readonly DataContext _context;
 
 
-        //Constructor
-        public AccountsController(IUserHelper userHelper, IConfiguration configuration, IFileStorage fileStorage)
-
+        public AccountsController(IUserHelper userHelper, IConfiguration configuration, IFileStorage fileStorage, IMailHelper mailHelper, DataContext context)
         {
-
             _userHelper = userHelper;
-
             _configuration = configuration;
-
             _fileStorage = fileStorage;
-
             _container = "users";
-
+            _mailHelper = mailHelper;
+            _context = context;
         }
 
-
-        //crea un nuevo usuario
         [HttpPost("CreateUser")]
-
         public async Task<ActionResult> CreateUser([FromBody] UserDTO model)
-
         {
 
-            User user = model;//convierte el DTO en una entidad User
-
-            var result = await _userHelper.AddUserAsync(user, model.Password);
-
+            User user = model;
             if (!string.IsNullOrEmpty(model.Photo))
-
             {
-
                 var photoUser = Convert.FromBase64String(model.Photo);
-
                 model.Photo = await _fileStorage.SaveFileAsync(photoUser, ".jpg", _container);
-
             }
-
-            if (result.Succeeded)//si la creacion sale bien
-
+            var result = await _userHelper.AddUserAsync(user, model.Password);
+            if (result.Succeeded)
             {
-                //asigna un rol al usuario basado en su tipo
                 await _userHelper.AddUserToRoleAsync(user, user.UserType.ToString());
-                //devuelve el token de autenticacion
-                return Ok(BuildToken(user));
+                var myToken = await _userHelper.GenerateEmailConfirmationTokenAsync(user);
+                var tokenLink = Url.Action("ConfirmEmail", "accounts", new
+                {
+                    userid = user.Id,
+                    token = myToken
+                }, HttpContext.Request.Scheme, _configuration["UrlWEB"]);
 
+                var response = _mailHelper.SendMail(user.FullName, user.Email!,
+                    $"Pomodoro- Confirmación de cuenta",
+                    $"<h1>Pomodoro - Confirmación de cuenta</h1>" +
+                    $"<p>Para habilitar el usuario, por favor hacer clic 'Confirmar Email':</p>" +
+                    $"<b><a href ={tokenLink}>Confirmar Email</a></b>");
+
+                if (response.IsSuccess)
+                {
+                    return NoContent();
+                }
+
+                return BadRequest(response.Message);
             }
 
-
-            //devuelve el error
             return BadRequest(result.Errors.FirstOrDefault());
-
         }
 
 
-
-
-        //autenticacion
         [HttpPost("Login")]
-
         public async Task<ActionResult> Login([FromBody] LoginDTO model)
-
         {
-            //verefica las credencialesdel usuario
             var result = await _userHelper.LoginAsync(model);
-
             if (result.Succeeded)
-
             {
-                //obtiene los datos del usuario para generar el token
                 var user = await _userHelper.GetUserAsync(model.Email);
-
                 return Ok(BuildToken(user));
-
             }
 
+
+            if (result.IsLockedOut)
+            {
+                return BadRequest("Ha superado el máximo número de intentos, su cuenta está bloqueada, intente de nuevo en 5 minutos.");
+            }
+
+            if (result.IsNotAllowed)
+            {
+                return BadRequest("El usuario no ha sido habilitado, debes de seguir las instrucciones del correo enviado para poder habilitar el usuario.");
+            }
 
 
             return BadRequest("Email o contraseña incorrectos.");
-
         }
 
-
-        //genera un token JWT para un usuario autenticado
         private TokenDTO BuildToken(User user)
-
         {
-
             var claims = new List<Claim>
-
             {
-                //reclama cada dato del usuario
                 new Claim(ClaimTypes.Name, user.Email!),
-
                 new Claim(ClaimTypes.Role, user.UserType.ToString()),
-
                 new Claim("Document", user.Document),
-
                 new Claim("FirstName", user.FirstName),
-
                 new Claim("LastName", user.LastName),
-
                 new Claim("Photo", user.Photo ?? string.Empty)
-
             };
 
-
-            //obtiene la clave de ka firma desde la configuracion
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["jwtKey"]!));
-
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);//algoritmo de firma
-
-            var expiration = DateTime.UtcNow.AddDays(30); //establece la expiracion del token de 30 dias
-
-            //crea el token JWT
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expiration = DateTime.UtcNow.AddDays(30);
             var token = new JwtSecurityToken(
+                issuer: null,
+                audience: null,
+                claims: claims,
+                expires: expiration,
+                signingCredentials: credentials);
 
-                issuer: null,//emisor
-
-                audience: null,//audiencia
-
-                claims: claims,//datos del usuario en el token
-
-                expires: expiration,//expiracion
-
-                signingCredentials: credentials);//credenciales de firma
-
-
-
-            return new TokenDTO//devuelve el token con su fecha de expiracion
-
+            return new TokenDTO
             {
-
-                Token = new JwtSecurityTokenHandler().WriteToken(token),//convierte eltoken a texto
-
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
                 Expiration = expiration
-
             };
-
         }
+
+
+
         [HttpPut]
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -225,7 +187,7 @@ namespace Pomodoro.API.Controllers
 
                 {
 
-                    return NoContent();
+                    return Ok(BuildToken(currentUser));
 
                 }
 
@@ -302,6 +264,199 @@ namespace Pomodoro.API.Controllers
 
 
             return NoContent();
+
+        }
+
+
+        [HttpGet("ConfirmEmail")]
+
+        public async Task<ActionResult> ConfirmEmailAsync(string userId, string token)
+
+        {
+
+            token = token.Replace(" ", "+");
+
+            var user = await _userHelper.GetUserAsync(new Guid(userId));
+
+            if (user == null)
+
+            {
+
+                return NotFound();
+
+            }
+
+
+
+            var result = await _userHelper.ConfirmEmailAsync(user, token);
+
+            if (!result.Succeeded)
+
+            {
+
+                return BadRequest(result.Errors.FirstOrDefault());
+
+            }
+
+
+
+            return NoContent();
+
+        }
+
+
+
+        [HttpPost("ResedToken")]
+
+        public async Task<ActionResult> ResedToken([FromBody] EmailDTO model)
+
+        {
+
+            User user = await _userHelper.GetUserAsync(model.Email);
+
+            if (user == null)
+
+            {
+
+                return NotFound();
+
+            }
+
+
+
+            var myToken = await _userHelper.GenerateEmailConfirmationTokenAsync(user);
+
+            var tokenLink = Url.Action("ConfirmEmail", "accounts", new
+
+            {
+
+                userid = user.Id,
+
+                token = myToken
+
+            }, HttpContext.Request.Scheme, _configuration["UrlWEB"]);
+
+
+
+            var response = _mailHelper.SendMail(user.FullName, user.Email!,
+
+                $"Pomodoro- Confirmación de cuenta",
+
+                $"<h1>Pomodoro - Confirmación de cuenta</h1>" +
+
+                $"<p>Para habilitar el usuario, por favor hacer clic 'Confirmar Email':</p>" +
+
+                $"<b><a href ={tokenLink}>Confirmar Email</a></b>");
+
+
+
+            if (response.IsSuccess)
+
+            {
+
+                return NoContent();
+
+            }
+
+
+
+            return BadRequest(response.Message);
+
+        }
+
+
+
+        [HttpPost("RecoverPassword")]
+
+        public async Task<ActionResult> RecoverPassword([FromBody] EmailDTO model)
+
+        {
+
+            User user = await _userHelper.GetUserAsync(model.Email);
+
+            if (user == null)
+
+            {
+
+                return NotFound();
+
+            }
+
+
+
+            var myToken = await _userHelper.GeneratePasswordResetTokenAsync(user);
+
+            var tokenLink = Url.Action("ResetPassword", "accounts", new
+
+            {
+
+                userid = user.Id,
+
+                token = myToken
+
+            }, HttpContext.Request.Scheme, _configuration["UrlWEB"]);
+
+
+
+            var response = _mailHelper.SendMail(user.FullName, user.Email!,
+
+                $"Pomodoro - Recuperación de contraseña",
+
+                $"<h1>Pomodoro - Recuperación de contraseña</h1>" +
+
+                $"<p>Para recuperar su contraseña, por favor hacer clic 'Recuperar Contraseña':</p>" +
+
+                $"<b><a href ={tokenLink}>Recuperar Contraseña</a></b>");
+
+
+
+            if (response.IsSuccess)
+
+            {
+
+                return NoContent();
+
+            }
+
+
+
+            return BadRequest(response.Message);
+
+        }
+
+
+
+        [HttpPost("ResetPassword")]
+
+        public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
+
+        {
+
+            User user = await _userHelper.GetUserAsync(model.Email);
+
+            if (user == null)
+
+            {
+
+                return NotFound();
+
+            }
+
+
+
+            var result = await _userHelper.ResetPasswordAsync(user, model.Token, model.Password);
+
+            if (result.Succeeded)
+
+            {
+
+                return NoContent();
+
+            }
+
+
+
+            return BadRequest(result.Errors.FirstOrDefault()!.Description);
 
         }
 
