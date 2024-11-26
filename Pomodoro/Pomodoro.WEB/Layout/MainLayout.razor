@@ -12,20 +12,11 @@
     }
 
     <main>
-        <div class="top-row px-4 d-flex justify-content-between align-items-center">
-            <AuthorizeView>
-                <Authorized>
-                    <div class="user-info d-flex align-items-center">
-                        <span>Hola, @context.User.Identity!.Name</span>
-                        <a href="Logout" class="nav-link btn btn-link">Cerrar Sesión</a>
-                    </div>
-                </Authorized>
+        <div class="top-row px-4 d-flex justify-content-between align-items-center" style="background-color: #f7f7f7; border-bottom: 1px solid #d6d5d5; height: 3.5rem; display: flex; align-items: center;">
+            @* Aquí referenciamos el componente AuthLinks *@
+            <AuthLinks />
 
-                <NotAuthorized>
-                    @* No se muestra nada en el caso de que no esté autorizado *@
-                </NotAuthorized>
-            </AuthorizeView>
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" style="white-space: nowrap; margin-left: 1.5rem; text-decoration: none;">About</a>
         </div>
 
         <article class="content px-4">

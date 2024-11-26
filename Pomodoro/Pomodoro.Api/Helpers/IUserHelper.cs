@@ -27,5 +27,9 @@ namespace Pomodoro.API.Helpers
         // Nuevos métodos de autenticación
         Task<SignInResult> LoginAsync(LoginDTO model); // Método de inicio de sesión
         Task LogoutAsync(); // Método de cierre de sesión
+
+        Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword);
+        Task<IdentityResult> UpdateUserAsync(User user);
+        Task<User> GetUserAsync(Guid userId);
     }
 }

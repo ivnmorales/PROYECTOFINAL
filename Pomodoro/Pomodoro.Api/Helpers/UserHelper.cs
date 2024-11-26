@@ -3,6 +3,7 @@ using Pomodoro.API.DATA;
 using Pomodoro.Shared.Entities;
 using Microsoft.EntityFrameworkCore;
 using Pomodoro.Shared.Dtos;
+using Pomodoro.API.Migrations;
 
 namespace Pomodoro.API.Helpers
 {
@@ -54,7 +55,6 @@ namespace Pomodoro.API.Helpers
         }
 
 
-
         public async Task CheckRoleAsync(string roleName)
 
         {
@@ -83,13 +83,25 @@ namespace Pomodoro.API.Helpers
 
         {
 
-            return await _context.Users
+            var user = await _context.Users
 
                 .FirstOrDefaultAsync(x => x.Email == email);
 
+            return user!;
+
         }
 
+        public async Task<User> GetUserAsync(Guid userId)
 
+        {
+
+            var user = await _context.Users
+
+                .FirstOrDefaultAsync(x => x.Id == userId.ToString());
+
+            return user!;
+
+        }
 
         public async Task<bool> IsUserInRoleAsync(User user, string roleName)
 
@@ -111,6 +123,23 @@ namespace Pomodoro.API.Helpers
             await _signInManager.SignOutAsync();
         }
 
+        public async Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
+
+        {
+
+            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+        }
+
+
+
+        public async Task<IdentityResult> UpdateUserAsync(User user)
+
+        {
+
+            return await _userManager.UpdateAsync(user);
+
+        }
     }
 
 } 
