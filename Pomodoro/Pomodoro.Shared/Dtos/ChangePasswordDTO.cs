@@ -4,7 +4,7 @@ public class ChangePasswordDTO
 {
     [DataType(DataType.Password)]
     [Display(Name = "Contraseña actual")]
-    [StringLength(20, MinimumLength = 6, ErrorMessage = "El campo {0} debe tener entre {2} y {1} carácteres.")]
+    [StringLength(20, MinimumLength = 6, ErrorMessage = "El campo {0} debe tener entre {2} y {1} caracteres.")]
     [Required(ErrorMessage = "El campo {0} es obligatorio.")]
     public string CurrentPassword { get; set; } = null!;
 

@@ -1,4 +1,5 @@
-﻿namespace Pomodoro.API.Helpers
+﻿//
+namespace Pomodoro.API.Helpers
 {
     public interface IFileStorage
 
